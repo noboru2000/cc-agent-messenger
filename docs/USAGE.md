@@ -57,6 +57,24 @@ all reach `explain_status`.
 
 ## A typical exchange
 
+The bot replies in your configured language — both are shown below.
+
+**English**
+
+    you →  /status
+    bot →  Running. Watching experiment X — epoch 12/50, loss 0.34 (stable).
+
+    you →  /options
+    bot →  Next steps:  1: lower the LR and continue   2: keep going   3: pause
+           (buttons — tap, say "1", or react 1️⃣)
+
+    you →  /select 1   (or tap "1", or react 1️⃣)
+    bot →  OK — lowering the learning rate to 1e-4 and continuing.
+
+    bot →  (later, unprompted)  Experiment X finished. Send "results" for the summary.
+
+**日本語**
+
     you →  /status
     bot →  稼働中。実験Xを監視中。直近: epoch 12/50、loss 0.34 で安定。
 
