@@ -31,6 +31,15 @@ jobs:
       id-token: write # required for Trusted Publishing (OIDC)
     steps:
       - uses: actions/checkout@v4
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VER="$(grep -m1 '^version' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/')"
+          echo "release tag: ${GITHUB_REF_NAME} (-> ${TAG}); pyproject version: ${VER}"
+          if [ "$TAG" != "$VER" ]; then
+            echo "::error::release tag '${TAG}' does not match pyproject version '${VER}'"
+            exit 1
+          fi
       - name: Install uv
         uses: astral-sh/setup-uv@v5
       - name: Build sdist + wheel

@@ -6,30 +6,35 @@ semantic versioning.
 
 ## [Unreleased]
 
-### Added
-- `--version` flag; author/contact/copyright metadata (pyproject author+maintainer
-  email, `__author__`/`__email__`/`__license__`/`__copyright__`, per-file SPDX
-  headers).
-- **Upgrade-safe `init`**: re-running `init` refreshes the skill to the installed
-  version while preserving `config.toml` (tokens/owner/channel) and `profile.json`;
-  per-file refreshed/kept report; `--refresh-profile` regenerates the profile from
-  the template (backing up the old one to `profile.json.bak`); migration hint when
-  an existing profile predates `command_prefix`. See SETUP.md §10 (Update/upgrade).
-- **Explicit command prefix** (`command_prefix`, default `!`): send `@bot !status`,
-  `!select 2`, `!doctor`, … for deterministic, exactly-resolved commands that need
-  **no Slack slash registration** and dodge Slack's reserved-word slashes
-  (`/status`, `/help`, …). Configurable per profile (`!` / `$` / `^`, etc.). Free
-  text and emoji/button surfaces are unchanged.
-- Initial scaffold of the portable package extracted from the verified C0 loop.
+## [0.1.0] - 2026-06-20
 
-### Changed
-- Default profile leads with the `!` prefix; `slash_map` now ships **empty** (native
-  Slack `/slash` commands are opt-in, non-reserved names only). `!help` and
-  `!doctor` are now first-class commands in the default profile.
+First public release.
+
+### Added
 - Resident Slack bot daemon (Bolt + Socket Mode) with a single egress chokepoint:
   kill switch → destination authorization → outbound filter/split → audit → post.
-- Unix-domain-socket send API + unified CLI:
-  `init`, `daemon`, `send`, `ping`, `status`, `stop`, `kill`, `doctor`.
-- Claude Code skill, config/profile templates, and the `init` scaffolder.
-- Multi-agent C1 skeleton (`AgentRunner`, `Router`) — Claude/Codex/Copilot C1
+  The Slack bot token stays inside the daemon only.
+- Unix-domain-socket send API + unified CLI: `init`, `uninstall`, `daemon`, `send`,
+  `ping`, `status`, `stop`, `kill`, `doctor`, plus `--version`.
+- **Explicit command prefix** (`command_prefix`, default `!`): `@bot !status`,
+  `!select 2`, `!doctor`, … — deterministic, exactly-resolved commands needing
+  **no Slack slash registration** (and dodging reserved-word slashes like
+  `/status`). Configurable (`!` / `$` / `^`). Free-text `@mention`, Block Kit
+  buttons, and emoji reactions are also supported; native `/slash` commands are
+  opt-in (the shipped `slash_map` is empty).
+- **Upgrade-safe `init`**: re-running refreshes the skill while preserving
+  `config.toml` (tokens/owner/channel) and `profile.json`; `--refresh-profile`
+  regenerates the profile (backing the old one up to `.bak`) with a migration hint.
+  See SETUP.md §10 (Update / upgrade).
+- Claude Code skill (C0 live-session monitor mode), config/profile templates, and
+  the `init` scaffolder; `uninstall` (with `--purge`) reverses it.
+- Multi-agent C1 skeleton (`AgentRunner`, `Router`) — Claude / Codex / Copilot C1
   PoC-verified; daemon wiring is a later increment.
+- Author/contact/copyright metadata: pyproject author + maintainer email,
+  `__author__`/`__email__`/`__license__`/`__copyright__`, per-file SPDX headers.
+- Project hygiene: issue/PR templates + contribution policy (CONTRIBUTING),
+  security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
+  Trusted-Publishing release workflow.
+
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/noboru2000/cc-agent-messenger/releases/tag/v0.1.0

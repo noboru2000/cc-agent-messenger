@@ -6,6 +6,11 @@
 
 **English** | [日本語](README.ja.md)
 
+[![PyPI](https://img.shields.io/pypi/v/cc-agent-messenger.svg)](https://pypi.org/project/cc-agent-messenger/)
+[![Python](https://img.shields.io/pypi/pyversions/cc-agent-messenger.svg)](https://pypi.org/project/cc-agent-messenger/)
+[![CI](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml/badge.svg)](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Reply to your AI coding agents from **Slack on your phone**, while they keep
 working in VS Code on your Mac. A small resident bot bridges a Slack channel to
 the live Claude Code session (and, headlessly, to Codex / Copilot), so you can

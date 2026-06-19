@@ -6,6 +6,11 @@
 
 [English](README.md) | **日本語**
 
+[![PyPI](https://img.shields.io/pypi/v/cc-agent-messenger.svg)](https://pypi.org/project/cc-agent-messenger/)
+[![Python](https://img.shields.io/pypi/pyversions/cc-agent-messenger.svg)](https://pypi.org/project/cc-agent-messenger/)
+[![CI](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml/badge.svg)](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Mac の VS Code で AI コーディングエージェントが作業を続けている間に、**iPhone の
 Slack** から状況確認・次の選択・完了通知などをやり取りできるツールです。常駐 bot が
 Slack チャネルと**ライブの Claude Code セッション**(および Codex / Copilot のヘッド
