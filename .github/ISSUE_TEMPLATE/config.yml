@@ -1,0 +1,14 @@
+# Force contributors through a template; route security + questions elsewhere.
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Security vulnerability (do NOT open a public issue)
+    url: https://github.com/noboru2000/cc-agent-messenger/security/advisories/new
+    about: >-
+      This tool runs commands in response to Slack messages. Report security
+      issues privately via a GitHub Security Advisory (or email the maintainer).
+      See SECURITY.md.
+  - name: 💬 Questions & usage help
+    url: https://github.com/noboru2000/cc-agent-messenger/discussions
+    about: >-
+      Ask how-to / setup / usage questions in Discussions. The issue tracker is
+      for actionable bug reports and feature requests only.

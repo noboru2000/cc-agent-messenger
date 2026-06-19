@@ -1,0 +1,61 @@
+name: ✨ Feature request
+description: Propose a change or new capability
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a small, security-sensitive tool maintained by one person.
+        **Significant changes should start as a discussion** so we agree on the
+        approach before any PR. Please open or link a
+        [Discussion](https://github.com/noboru2000/cc-agent-messenger/discussions)
+        for non-trivial proposals.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues / discussions and this isn't a duplicate.
+          required: true
+        - label: I understand that PRs for non-trivial changes should be discussed first.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What are you trying to do, and why is it hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to see? Sketch the CLI / config / behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: dropdown
+    id: security-impact
+    attributes:
+      label: Does this touch the security model?
+      description: >-
+        e.g. authorization (NN4), kill switch, audit, token handling, the closed
+        command set, or running new commands. See SECURITY.md.
+      options:
+        - "No — UX / docs / non-security change"
+        - "Maybe — not sure, needs discussion"
+        - "Yes — it changes the security model"
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd be willing to open a PR after the approach is agreed.
+          required: false

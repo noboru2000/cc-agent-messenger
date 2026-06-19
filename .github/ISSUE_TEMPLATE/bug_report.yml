@@ -1,0 +1,92 @@
+name: 🐞 Bug report
+description: Something doesn't work as documented
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Before filling this in:
+
+        - **Not a security issue?** Vulnerabilities go through a private
+          [Security Advisory](https://github.com/noboru2000/cc-agent-messenger/security/advisories/new),
+          not a public issue (see SECURITY.md).
+        - **Redact secrets.** Never paste Slack tokens (`xoxb-…`, `xapp-…`), IDs,
+          or anything from `.cc-agent-messenger/config.toml` into this issue.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: This is a bug, not a security vulnerability or a usage question.
+          required: true
+        - label: I have removed all tokens / secrets / private IDs from this report.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `cc-agent-messenger --version`.
+      placeholder: cc-agent-messenger 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - uv tool install (PyPI)
+        - pipx install (PyPI)
+        - pip install (PyPI)
+        - from git (uv tool install git+…)
+        - from source / editable
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Agent / mode in use
+      options:
+        - Claude Code — live session (C0)
+        - Claude Code — headless (C1)
+        - Codex (C1)
+        - Copilot (C1)
+        - Not applicable / setup-only
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS + Python
+      description: e.g. macOS 15.5 / Python 3.12 (and WSL if applicable).
+      placeholder: macOS 15.5, Python 3.12
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. cc-agent-messenger init
+        2. …
+        3. Send `@bot !status` from Slack
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output (redacted)
+      description: >-
+        `cc-agent-messenger doctor` output and any daemon error lines. Double-check
+        there are no tokens or IDs before pasting — this will be rendered as code.
+      render: shell
+    validations:
+      required: false
