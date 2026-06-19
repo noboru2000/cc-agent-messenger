@@ -1,0 +1,39 @@
+name: Publish to PyPI
+
+# Publishes to PyPI when a GitHub Release is published.
+#
+# Uses PyPI Trusted Publishing (OIDC) — no API token stored. Before the first
+# run, configure a Trusted Publisher on PyPI:
+#   pypi.org → (your project, or "pending publisher" for a new name) → Publishing →
+#   Add a GitHub publisher:
+#     owner:        noboru2000
+#     repository:   cc-agent-messenger
+#     workflow:     release.yml
+#     environment:  pypi
+# Optionally create a GitHub environment named "pypi" with protection rules.
+# To dry-run first, point at TestPyPI (configure a publisher on test.pypi.org and
+# set `repository-url: https://test.pypi.org/legacy/` on the publish step).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cc-agent-messenger
+    permissions:
+      id-token: write # required for Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build sdist + wheel
+        run: uv build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
