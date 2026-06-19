@@ -80,3 +80,49 @@ local-only (NN8). Hands-free auto-reply is a conscious allowlist grant. See
 `sendapi` (Unix-socket server) · `ingress` (4 surfaces) · `daemon` (Bolt wiring) ·
 `ipcclient` · `lifecycle` (pidfile/status/stop) · `doctor` · `cli` · `commands`
 (registry + i18n) · `agentrunner` + `router` + `multiagent` (C1 routing).
+
+## Layout & extensibility
+
+### Why `src/claude_messenger/` (the "src layout")
+
+Standard PyPA layout: the importable package is `claude_messenger`; tests run
+against the *installed* package (catching packaging bugs a flat layout hides), and
+the package boundary is unambiguous. (`claude-messenger` is the distribution / repo
+name; `claude_messenger` — underscore — is the import name, since Python packages
+cannot contain hyphens.) Keep it; do not flatten modules directly under `src/`.
+
+### Two orthogonal plugin axes
+
+- **AI agent** (Claude / Codex / Copilot) — **already abstracted**: `agentrunner`
+  + `router` + `multiagent` (channel → agent; C0 live / C1 headless).
+- **Messaging transport** (Slack / LINE / Teams) — Slack-only today; to be
+  abstracted behind a `Transport` interface **when a second transport is added**.
+
+### Future: transport abstraction (`core` + `transports/`)
+
+Planned structure once a second messaging tool (e.g. LINE / Teams) lands:
+
+```text
+src/claude_messenger/
+├── core/          # transport-agnostic: egress chokepoint, profile/commands,
+│                  #   authz, killswitch, audit, send API + CLI, the agent layer
+└── transports/
+    ├── base.py    # the Transport interface
+    ├── slack/     # Bolt + Socket Mode ingress / chat.postMessage egress / tokens
+    ├── line/      # (future) Messaging API webhook / push
+    └── teams/     # (future) Bot Framework
+```
+
+```python
+class Transport(Protocol):
+    def start(self, on_event: Callable[[InboundEvent], None]) -> None: ...  # receive → normalize → core
+    def post(self, channel: str, text: str, *, thread=None, options=None, identity=None) -> str: ...
+    def is_live(self) -> bool: ...
+```
+
+- `egress.handle_send` would call `transport.post(...)` (the **chokepoint stays in
+  core**); the daemon's Bolt wiring becomes the Slack transport's `start()`.
+- Today the Slack specifics are localized in `slackclient`, `daemon.build_app`, and
+  `ingress` (the four surfaces) — the seam to lift out later.
+- **Timing:** introduce the interface with the *second* implementation (avoid
+  abstracting against a single case / speculative generality).
