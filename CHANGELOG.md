@@ -6,6 +6,12 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-20
+
+### Changed
+- README logo now uses an absolute URL so it renders on the **PyPI project page**
+  (PyPI does not resolve relative image paths in the long description).
+
 ## [0.1.0] - 2026-06-20
 
 First public release.
@@ -36,5 +42,6 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/noboru2000/cc-agent-messenger/releases/tag/v0.1.0

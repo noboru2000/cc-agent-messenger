@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
+  <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
 </p>
 
 # cc-agent-messenger
