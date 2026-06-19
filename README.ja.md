@@ -23,12 +23,37 @@ Slack チャネルと**ライブの Claude Code セッション**(および Code
 > (意識的に受け入れるリスク)。無保証・自己責任。[SECURITY.md](SECURITY.md) 参照。
 
 ```text
-iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
+iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
                                        │ 認可(NN4)+ コマンド照合
                                        ▼
                                tmp/.slack_message  ◄── tail -f Monitor(ライブ Claude セッション)
           iPhone プッシュ ◄── bot chat.postMessage ◄── cc-agent-messenger send(Unix socket 送信 API)
 ```
+
+## デモ
+
+スマホから見た様子 — bot を `@`メンションすると、Mac 上のライブ Claude Code
+セッションが返信します(コマンドは `!` 始まり。自由文や絵文字/ボタンのタップも可):
+
+```text
+  あなた → @bot !status
+  bot    → 稼働中。実験Xを監視中。直近: epoch 12/50、loss 0.34 で安定。
+
+  あなた → @bot !options
+  bot    → 次の一手:
+             1: 学習率を下げて継続
+             2: 現状で継続
+             3: 一旦停止
+           （ボタンをタップ / 「1」/ 1️⃣ で選択）
+
+  あなた → !select 1
+  bot    → 了解。学習率を 1e-4 に下げて継続します。
+
+  bot    → （しばらく後、こちらから）✅ 実験Xが完了しました。!results で結果を送ります。
+```
+
+<!-- 画面録画があれば docs/images/demo.gif に保存し、上のブロックを次に差し替え:
+     <p align="center"><img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/demo.gif" alt="cc-agent-messenger demo" width="540"></p> -->
 
 ## 何ができるか
 

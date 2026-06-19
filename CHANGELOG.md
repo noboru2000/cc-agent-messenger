@@ -6,6 +6,13 @@ semantic versioning.
 
 ## [Unreleased]
 
+### Added
+- README (en/ja): a **Demo** section showing a typical phone-side Slack exchange,
+  with a commented slot for a screen-recording GIF.
+
+### Fixed
+- README.ja flow diagram showed the old `/status`; now `!status`.
+
 ## [0.1.1] - 2026-06-20
 
 ### Changed

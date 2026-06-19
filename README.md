@@ -31,6 +31,33 @@ iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
           iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
 ```
 
+## Demo
+
+What it looks like from your phone — a Slack thread where you `@`-mention the bot
+and the live Claude Code session on your Mac answers (commands start with `!`;
+plain words and emoji/button taps work too):
+
+```text
+  you →  @bot !status
+  bot →  Running. Watching experiment X — epoch 12/50, loss 0.34 (stable).
+
+  you →  @bot !options
+  bot →  Next steps:
+           1: lower the learning rate and continue
+           2: keep going
+           3: pause
+         (tap a button, say "1", or react 1️⃣)
+
+  you →  !select 1
+  bot →  OK — lowering the learning rate to 1e-4 and continuing.
+
+  bot →  (later, unprompted)  ✅ Experiment X finished. Send !results for the summary.
+```
+
+<!-- Got a screen recording? Save it to docs/images/demo.gif and replace the block
+     above with:
+     <p align="center"><img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/demo.gif" alt="cc-agent-messenger demo" width="540"></p> -->
+
 ## What it does
 
 - **Inbound:** a Slack message in your private channel is authorized and appended
