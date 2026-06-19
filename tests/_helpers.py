@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Shared test helpers. Importing this also puts ``src/`` and ``scripts/`` on the
 path so the suite runs under both ``pytest`` and ``python -m unittest``.
 """

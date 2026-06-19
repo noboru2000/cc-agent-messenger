@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """cc_agent_messenger — Slack message-turn bridge (C0 loop).
 
 Phase 3 implementation. This first increment covers the return path: the
@@ -9,4 +11,8 @@ See ``docs/DETAILED_DESIGN.md`` for the contracts implemented here.
 """
 
 __version__ = "0.1.0"
+__author__ = "Noboru Harada"
+__email__ = "noboru@ieee.org"
+__license__ = "MIT"
+__copyright__ = "Copyright (c) 2026 Noboru Harada"
 PROTOCOL_VERSION = 1

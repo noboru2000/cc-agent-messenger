@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """AgentRunner — the C1 (headless spawn-per-turn) abstraction (SKELETON).
 
 See ``docs/MULTI_AGENT_DESIGN.md``. C1 is PoC-verified for Claude (`claude -p`),

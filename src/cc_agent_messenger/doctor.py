@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Diagnostics: `cc-agent-messenger doctor` (and the remote `/doctor` payload).
 
 See ``docs/PACKAGE_DESIGN.md`` §8. Read-only checks over config, paths, kill

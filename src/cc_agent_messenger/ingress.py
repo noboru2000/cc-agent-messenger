@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Slack inbound pipeline — the four §2.6 surfaces into the C0 event file.
 
 See ``docs/DETAILED_DESIGN.md`` §7.6. Each surface resolves a ``trigger`` then

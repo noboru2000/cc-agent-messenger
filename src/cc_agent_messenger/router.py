@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Router — channel → agent resolution (SKELETON).
 
 See ``docs/MULTI_AGENT_DESIGN.md`` §5/§10. Dedicated channel per agent: the

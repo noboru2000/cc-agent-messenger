@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Owner/channel authorization (NN4).
 
 See ``docs/DETAILED_DESIGN.md`` §7.2. Only the configured owner in the configured

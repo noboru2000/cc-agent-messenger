@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Tiny client for the daemon's Unix-socket send API.
 
 Shared by the CLI (`send`/`ping`) and lifecycle (`status`). One newline-terminated

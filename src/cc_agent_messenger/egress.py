@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """The send-API egress chokepoint (BASIC_DESIGN §10.3, DETAILED_DESIGN §7.7).
 
 Every outbound Slack post flows through ``handle_send`` so the kill switch,

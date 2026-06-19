@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Data models shared across the daemon and the send API.
 
 See ``docs/DETAILED_DESIGN.md`` §5.

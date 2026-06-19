@@ -82,6 +82,10 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — C0 ループ・egress chokepoint・4入力面・
   セキュリティモデル。
 
-## ライセンス
+## ライセンス・作者
 
-[MIT](LICENSE)。
+[MIT](LICENSE) © 2026 Noboru Harada。
+
+**作者・メンテナ:** Noboru Harada &lt;noboru@ieee.org&gt;。脆弱性報告は
+[SECURITY.md](SECURITY.md)、不具合・要望は
+[Issue](https://github.com/noboru2000/cc-agent-messenger/issues) へ。

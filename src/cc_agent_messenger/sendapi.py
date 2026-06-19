@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Local Unix-domain-socket server exposing the send API (DETAILED_DESIGN §7.8).
 
 One newline-terminated JSON request per connection, one JSON response. The socket

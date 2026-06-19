@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Inbound command matcher + outbound reply rule (the v1 profile).
 
 See ``docs/DETAILED_DESIGN.md`` §7.1 and §8. The profile is the concrete

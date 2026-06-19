@@ -5,7 +5,8 @@ description = "Slack message-turn bridge to AI coding agents (Claude Code / Code
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Noboru Harada" }]
+authors = [{ name = "Noboru Harada", email = "noboru@ieee.org" }]
+maintainers = [{ name = "Noboru Harada", email = "noboru@ieee.org" }]
 keywords = ["slack", "claude-code", "codex", "copilot", "ai-agent", "bot", "socket-mode"]
 classifiers = [
     "Development Status :: 3 - Alpha",

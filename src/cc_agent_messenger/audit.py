@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Append-only audit log with date rotation + retention (NN6/NN7).
 
 See ``docs/DETAILED_DESIGN.md`` §7.4. Entries are one JSONL line in a per-day

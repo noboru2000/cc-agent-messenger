@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Multi-agent layer: per-agent config (identity map) + routing + dispatch.
 
 See ``docs/MULTI_AGENT_DESIGN.md``. Dedicated channel per agent: an inbound event's

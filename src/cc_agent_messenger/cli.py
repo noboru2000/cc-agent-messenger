@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Unified CLI — `cc-agent-messenger <subcommand>`.
 
 Subcommands: init / daemon / send / ping / status / stop / kill / doctor.

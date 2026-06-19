@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Kill switch (NN6).
 
 See ``docs/DETAILED_DESIGN.md`` §7.3. v1 mechanism = presence of a file at the

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Daemon lifecycle: pidfile + status/stop (terminal-side management).
 
 See ``docs/PACKAGE_DESIGN.md`` §14. The daemon writes a pidfile on start; status

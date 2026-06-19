@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Daemon wiring (DETAILED_DESIGN §7.9).
 
 Starts the send-API server (return path) in a background thread and the Slack

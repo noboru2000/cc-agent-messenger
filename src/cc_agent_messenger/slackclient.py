@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Thin wrapper around the Slack Web API for egress (the bot identity holder).
 
 See ``docs/DETAILED_DESIGN.md`` §7.5. The bot token lives only here (P3/NN8);

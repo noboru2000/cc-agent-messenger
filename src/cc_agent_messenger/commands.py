@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Command registry + i18n (DESIGN: PACKAGE_DESIGN §6, MULTI_AGENT_DESIGN §6).
 
 Single source of truth for slash names, multilingual aliases, and `/help` text.

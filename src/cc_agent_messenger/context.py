@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Shared application context wiring config, profile, and the egress client.
 
 See ``docs/DETAILED_DESIGN.md`` §7.9. Kept in its own module so egress, the send

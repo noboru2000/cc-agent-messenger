@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Noboru Harada
 """Local configuration loading and validation.
 
 Configuration is local-only; real tokens and host paths live under

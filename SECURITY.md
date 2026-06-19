@@ -42,10 +42,13 @@ for you.
 
 ## Reporting a vulnerability
 
-Please report security issues privately to the maintainer (open a minimal,
-non-public report via the repository's security advisory feature, or contact the
-maintainer directly) rather than filing a public issue. We will acknowledge and
-respond as soon as practical.
+Please report security issues **privately**, not as a public issue. Either:
+
+- open a private report via the repository's **Security Advisories**
+  (<https://github.com/noboru2000/cc-agent-messenger/security/advisories/new>), or
+- email the maintainer: **Noboru Harada &lt;noboru@ieee.org&gt;**.
+
+We will acknowledge and respond as soon as practical.
 
 ## No warranty
 

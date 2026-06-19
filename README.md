@@ -90,6 +90,9 @@ or plain words (`状況は?`, `status`). Full reference in
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the C0 loop, the egress
   chokepoint, the four input surfaces, the security model.
 
-## License
+## License & author
 
-[MIT](LICENSE).
+[MIT](LICENSE) © 2026 Noboru Harada.
+
+**Author / maintainer:** Noboru Harada &lt;noboru@ieee.org&gt;. Security reports:
+see [SECURITY.md](SECURITY.md). Bugs / features: [open an issue](https://github.com/noboru2000/cc-agent-messenger/issues).
