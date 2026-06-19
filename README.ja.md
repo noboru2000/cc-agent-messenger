@@ -77,7 +77,7 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
 ## ドキュメント
 
 - [docs/SETUP.md](docs/SETUP.md) — Slack アプリ作成・招待・設定・起動・E2E・トラブルシュート。
-- [docs/USAGE.md](docs/USAGE.md) — Slack コマンドリファレンス(`/help`・`/status` 等)・
+- [docs/USAGE.ja.md](docs/USAGE.ja.md) — Slack コマンドリファレンス(`/help`・`/status` 等)・
   キーワード・起動後の期待動作。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — C0 ループ・egress chokepoint・4入力面・
   セキュリティモデル。

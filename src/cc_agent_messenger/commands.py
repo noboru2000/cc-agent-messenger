@@ -25,7 +25,7 @@ class Command:
 REGISTRY: list[Command] = [
     Command("help", ["/help", "/?"], ["ヘルプ", "コマンド"], ["help", "commands"], "使えるコマンド一覧", "List available commands"),
     Command("health_check", ["/health"], ["生きてますか", "生きてる"], ["alive", "ping"], "生存確認", "Liveness check"),
-    Command("explain_status", ["/status"], ["最新の状況", "状況"], ["status"], "最新の状況を報告", "Report the latest status"),
+    Command("explain_status", ["/status"], ["状況", "状態"], ["status"], "最新の状況を報告", "Report the latest status"),
     Command("report_results", ["/results"], ["結果"], ["results"], "結果が出ていれば報告", "Report results if any"),
     Command("report_issues", ["/report", "/issues"], ["不具合"], ["issues"], "不具合があれば報告", "Report issues if any"),
     Command("propose_options", ["/options"], ["選択肢"], ["options"], "次の選択肢を提示", "Propose next-step options"),

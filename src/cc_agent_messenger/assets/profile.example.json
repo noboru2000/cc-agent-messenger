@@ -4,7 +4,7 @@
   "max_chunk_chars": 3900,
   "commands": [
     { "trigger": "health_check", "patterns": ["生きてますか", "生きてる", "health"] },
-    { "trigger": "explain_status", "patterns": ["最新の状況を説明", "状況を説明", "状況", "status"] },
+    { "trigger": "explain_status", "patterns": ["最新の状況を説明", "状況を説明", "状況", "状態", "status"] },
     { "trigger": "report_issues", "patterns": ["不具合があれば報告", "不具合", "issues"] },
     { "trigger": "report_results", "patterns": ["結果が出ていれば報告", "結果", "results"] },
     { "trigger": "propose_options", "patterns": ["次に何をすべきか選択肢", "選択肢をあげて", "選択肢", "options"] },

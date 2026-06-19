@@ -1,5 +1,7 @@
 # Using it from Slack — command reference
 
+**English** | [日本語](USAGE.ja.md)
+
 Once the daemon is running (`cc-agent-messenger daemon`) **and** the
 `cc-agent-messenger` skill is armed in your VS Code Claude Code session, drive it
 from your Slack channel on the phone. Only the configured **owner**, in the
@@ -21,7 +23,7 @@ configured **channel**, is honored — everything else is ignored (NN4).
 |---|---|---|
 | `/help`, `/?` | ヘルプ / help | Lists the available commands. |
 | `/health` | 生きてますか / alive | Liveness — replies briefly (e.g. "稼働中"). |
-| `/status` | 最新の状況・状況 / status | Summarizes what the agent is currently working on / monitoring. |
+| `/status` | 状況・状態 / status | Summarizes what the agent is currently working on / monitoring. |
 | `/results` | 結果 / results | Reports results if any are ready. |
 | `/report`, `/issues` | 不具合 / issues | Reports any failures / errors found. |
 | `/options` | 選択肢 / options | Offers a short numbered list of next steps (may render buttons). |
