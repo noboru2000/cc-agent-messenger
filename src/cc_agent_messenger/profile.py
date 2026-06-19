@@ -31,31 +31,73 @@ class Profile:
     reaction_map: dict[str, dict[str, object]] = field(default_factory=dict)
     interpretation_mode: str = "flexible"
     max_chunk_chars: int = 3900
+    # Explicit command prefix (e.g. "!status"). A single char that has no Slack
+    # mrkdwn / HTML-escape / autocomplete meaning ("!" by default; "$" etc. also
+    # safe). Set to "" to disable the explicit form. See docs/USAGE.md.
+    command_prefix: str = "!"
 
 
 def _normalize(text: str) -> str:
     return re.sub(r"\s+", "", text).lower()
 
 
+def _index_args(rule: CommandRule, text: str) -> dict[str, object]:
+    args: dict[str, object] = {}
+    if rule.takes_index:
+        found = _INDEX_RE.search(text)
+        if found:
+            args["index"] = int(found.group(1))
+    return args
+
+
+def strip_command_prefix(text: str, prefix: str) -> tuple[str, bool]:
+    """Strip an explicit command prefix. Returns ``(body, explicit)``.
+
+    ``"!status"`` → ``("status", True)``; ``"状況"`` → ``("状況", False)``. An empty
+    ``prefix`` disables the explicit form (always ``explicit=False``).
+    """
+
+    if prefix:
+        lead = text.lstrip()
+        if lead.startswith(prefix):
+            return lead[len(prefix) :].lstrip(), True
+    return text, False
+
+
 def match_command(text: str, profile: Profile) -> CommandMatch:
-    """Map free text to a command via the bot fast-path (deterministic).
+    """Map text to a command via the bot fast-path (deterministic).
+
+    Two forms resolve here:
+
+    - **Explicit** — ``"!status"`` / ``"!select 2"``: the leading token after the
+      ``command_prefix`` is matched *exactly* against a command's trigger id or any
+      of its patterns. This is unambiguous (no fuzzy/substring guessing) and needs
+      no Slack slash registration.
+    - **Free text** — ``"状況を教えて"``: each command's patterns are tried as
+      substrings (the original behavior), so loose phrasing still maps.
 
     Returns ``CommandMatch(None, {})`` when nothing matches; the caller decides
     whether to refuse (strict) or pass through for the LLM fallback (flexible).
     """
 
-    norm = _normalize(text)
+    body, explicit = strip_command_prefix(text, profile.command_prefix)
+    if explicit:
+        token = body.split(maxsplit=1)[0] if body.split() else ""
+        ntoken = _normalize(token)
+        if ntoken:
+            for rule in profile.commands:
+                names = {_normalize(rule.trigger)}
+                names.update(_normalize(p) for p in rule.patterns)
+                if ntoken in names:
+                    return CommandMatch(rule.trigger, _index_args(rule, body))
+
+    norm = _normalize(body)
     if not norm:
         return CommandMatch(None, {})
     for rule in profile.commands:
         for pattern in rule.patterns:
             if _normalize(pattern) in norm:
-                args: dict[str, object] = {}
-                if rule.takes_index:
-                    found = _INDEX_RE.search(text)
-                    if found:
-                        args["index"] = int(found.group(1))
-                return CommandMatch(rule.trigger, args)
+                return CommandMatch(rule.trigger, _index_args(rule, body))
     return CommandMatch(None, {})
 
 
@@ -120,4 +162,5 @@ def load_profile(path: str) -> Profile:
         reaction_map=dict(data.get("reaction_map", {})),
         interpretation_mode=str(data.get("interpretation_mode", "flexible")),
         max_chunk_chars=int(data.get("max_chunk_chars", 3900)),
+        command_prefix=str(data.get("command_prefix", "!")),
     )

@@ -31,10 +31,13 @@ Start a **persistent** Monitor on the ingress file (plain `tail`, no pipe):
 
 Each line is one JSON event:
 `{"v","source","channel_id","thread_ts","user_id","text","ts","trigger","correlation_id","args"}`.
-Dispatch on `trigger` (the bot already authorized the sender, NN4):
+Dispatch on `trigger` (the bot already authorized the sender, NN4). Explicit
+commands (`!status`, `!select 2`, …) and keywords arrive **pre-resolved** into
+`trigger`/`args`, so you act on the table below — you don't parse the `!` yourself:
 
 | `trigger` | Do |
 |---|---|
+| `help` | reply with the available commands (the `!status` / `!options` / … list) |
 | `health_check` | `cc-agent-messenger ping`; reply briefly (e.g. "稼働中") |
 | `explain_status` | summarize the current work / experiment state and reply concisely |
 | `report_issues` | report any failures/errors found (read-only) |

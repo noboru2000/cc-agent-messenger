@@ -9,27 +9,37 @@ configured **channel**, is honored — everything else is ignored (NN4).
 
 ## Four ways to send a command
 
-1. **@mention with free text** — `@<bot-name> 最新の状況を教えて`. Phrasing can
-   vary; the bot matches known command keywords, and for anything else the live
-   session interprets your intent (and asks a quick `1 / 2` question if ambiguous).
-2. **Slash commands** — `/status`, `/options`, … Typo-reduced (mobile autocomplete)
-   and deterministic. (Register them in the Slack app; see [SETUP.md](SETUP.md) §2.4.)
+1. **@mention + explicit command** — `@<bot-name> !status`. The leading `!` (the
+   **command prefix**) is **deterministic**: the bot resolves `!status` exactly,
+   with no fuzzy guessing and **no Slack slash registration**. Use it for `!status`,
+   `!options`, `!select 2`, `!continue`, `!doctor`, `!help`, … ⭐ recommended.
+2. **@mention + free text** — `@<bot-name> 最新の状況を教えて`. Phrasing can vary; the
+   bot matches known keywords, and for anything else the live session interprets
+   your intent (and asks a quick `1 / 2` question if ambiguous).
 3. **Buttons** — when the bot offers options, just **tap** one (no typing).
 4. **Emoji reactions** — react to a bot message (e.g. 1️⃣ / 2️⃣ / ✅) to choose.
 
+> The prefix is configurable (`command_prefix` in `.cc-agent-messenger/profile.json`);
+> `!` by default. `$` and `^` are other safe choices. Avoid `*`, `` ` ``, `&`, `~`,
+> `_`, `>`, `#`, `:`, `@`, `/` — Slack gives those characters special meaning.
+> Native Slack `/slash` commands are **optional**; see [SETUP.md](SETUP.md) §2.4.
+
 ## Commands
 
-| Slash | Also say (JP / EN) | What it does — expected reply |
+Send any of these as `@<bot-name> !<command>` (the `!` makes it exact), or just say
+the keywords and let the bot match them.
+
+| Command | Also say (JP / EN) | What it does — expected reply |
 |---|---|---|
-| `/help`, `/?` | ヘルプ / help | Lists the available commands. |
-| `/health` | 生きてますか / alive | Liveness — replies briefly (e.g. "稼働中"). |
-| `/status` | 状況・状態 / status | Summarizes what the agent is currently working on / monitoring. |
-| `/results` | 結果 / results | Reports results if any are ready. |
-| `/report`, `/issues` | 不具合 / issues | Reports any failures / errors found. |
-| `/options` | 選択肢 / options | Offers a short numbered list of next steps (may render buttons). |
-| `/select <n>` | 「1番」「2番」/ select 2 | Picks option *n* from the options last offered. |
-| `/continue`, `/resume` | 継続・続行 / continue | Resumes the planned monitoring loop. |
-| `/doctor` | 診断 / doctor | Runs diagnostics; replies with a redacted health summary. |
+| `!help` | ヘルプ / help | Lists the available commands. |
+| `!health` | 生きてますか / alive | Liveness — replies briefly (e.g. "稼働中"). |
+| `!status` | 状況・状態 / status | Summarizes what the agent is currently working on / monitoring. |
+| `!results` | 結果 / results | Reports results if any are ready. |
+| `!issues` | 不具合 / issues | Reports any failures / errors found. |
+| `!options` | 選択肢 / options | Offers a short numbered list of next steps (may render buttons). |
+| `!select <n>` | 「1番」「2番」/ select 2 | Picks option *n* from the options last offered. |
+| `!continue` | 継続・続行 / continue | Resumes the planned monitoring loop. |
+| `!doctor` | 診断 / doctor | Runs diagnostics; replies with a redacted health summary. |
 
 Free text that doesn't match a command is **interpreted by the live session** and
 mapped to one of the commands above — it does **not** run arbitrary actions, and
@@ -61,28 +71,28 @@ The bot replies in your configured language — both are shown below.
 
 **English**
 
-    you →  /status
+    you →  @bot !status
     bot →  Running. Watching experiment X — epoch 12/50, loss 0.34 (stable).
 
-    you →  /options
+    you →  @bot !options
     bot →  Next steps:  1: lower the LR and continue   2: keep going   3: pause
            (buttons — tap, say "1", or react 1️⃣)
 
-    you →  /select 1   (or tap "1", or react 1️⃣)
+    you →  @bot !select 1   (or tap "1", or react 1️⃣)
     bot →  OK — lowering the learning rate to 1e-4 and continuing.
 
-    bot →  (later, unprompted)  Experiment X finished. Send "results" for the summary.
+    bot →  (later, unprompted)  Experiment X finished. Send "!results" for the summary.
 
 **日本語**
 
-    you →  /status
+    you →  @bot !status
     bot →  稼働中。実験Xを監視中。直近: epoch 12/50、loss 0.34 で安定。
 
-    you →  /options
+    you →  @bot !options
     bot →  次の一手:  1: 学習率を下げて継続   2: 現状で継続   3: 一旦停止
            （ボタン表示。タップ / 「1番」/ 1️⃣ で選択）
 
-    you →  /select 1   (or tap "1", or react 1️⃣)
+    you →  @bot !select 1   (or tap "1", or react 1️⃣)
     bot →  了解。学習率を 1e-4 に下げて継続します。
 
-    bot →  （しばらく後、こちらから)  実験Xが完了しました。結果は results を送ってください。
+    bot →  （しばらく後、こちらから)  実験Xが完了しました。結果は !results を送ってください。

@@ -6,7 +6,7 @@ run it, and verify the round trip. Host-specific values use placeholders like
 `.cc-agent-messenger/config.toml` (gitignored; never commit — NN8).
 
 ```text
-iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
+iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
                                        │ authorize (NN4) + match command
                                        ▼
                                tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
@@ -66,14 +66,16 @@ Either way you get the global `cc-agent-messenger` command. Verify:
 3. **Socket Mode → Enable.** Generate an **App-Level Token** with scope
    `connections:write` (this is the `xapp-…` token). The **Token Name** is only a
    label — anything works; e.g. `socket-mode`.
-4. **Slash Commands — optional; you can skip this step.** The bridge works fully
-   via **`@mention` free text** (the live session interprets your wording
-   flexibly), so no slash commands are required. Note that several useful names
-   (`/status`, `/help`, `/remind`, …) are **Slack reserved words** and cannot be
-   registered as custom commands. If you still want slash shortcuts, use
-   **non-reserved** names (e.g. `/cc-status`, `/cc-options`) and set the matching
-   keys in the `slash_map` of `.cc-agent-messenger/profile.json` (needs the
-   `commands` bot scope). Otherwise, leave slash commands out — `@mention` is enough.
+4. **Slash Commands — optional; you can skip this step.** For a **deterministic**
+   command you don't register anything in Slack: just `@mention` the bot with a
+   **`!` prefix**, e.g. `@<bot-name> !status` (`!options`, `!select 2`, `!continue`,
+   `!doctor`, `!help`). The leading `!` (the configurable `command_prefix`) resolves
+   exactly, and plain `@mention` free text (`状況は?`) also works — so **no slash
+   commands are required**. Note that the obvious names (`/status`, `/help`,
+   `/remind`, …) are **Slack reserved words** and cannot be registered anyway. If you
+   still want native Slack slash shortcuts (for mobile autocomplete), use
+   **non-reserved** names (e.g. `/cc-status`) and set the matching keys in the
+   `slash_map` of `.cc-agent-messenger/profile.json` (needs the `commands` bot scope).
 5. **Event Subscriptions → Enable.** Under "Subscribe to bot events" add
    `app_mention`, `message.groups`, `reaction_added`. **Save.** (Required even
    under Socket Mode — without it no events arrive.)
@@ -149,13 +151,13 @@ to each Slack command via `cc-agent-messenger send`.
 ## 7. End-to-end test
 
 From the iPhone Slack app, in the private channel, send
-`@<bot-name> 最新の状況を教えて` (or a registered slash command). The daemon appends one JSONL line; the Monitor
+`@<bot-name> !status` (or `@<bot-name> 最新の状況を教えて`). The daemon appends one JSONL line; the Monitor
 wakes the live session; it composes a concise status and calls
 `cc-agent-messenger send`; the bot posts the reply mentioning you; your phone is
 pushed.
 
-For the full set of commands you can send (`/help`, `/status`, `/options`,
-`/select`, `/continue`, `/doctor`, …), their keywords, and the expected replies,
+For the full set of commands you can send (`!help`, `!status`, `!options`,
+`!select`, `!continue`, `!doctor`, …), their keywords, and the expected replies,
 see the **[command reference → docs/USAGE.md](USAGE.md)**.
 
 ## 8. Multiple agents (optional) & multiple projects

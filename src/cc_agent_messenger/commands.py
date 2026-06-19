@@ -48,10 +48,19 @@ def by_slash(slash: str) -> Command | None:
     return None
 
 
-def help_text(lang: str = "ja") -> str:
+def bang_name(command: Command) -> str:
+    """The explicit-command token for a command: its first slash without the
+    leading ``/`` (e.g. ``/status`` -> ``status``), falling back to the id."""
+
+    if command.slashes:
+        return command.slashes[0].lstrip("/")
+    return command.id
+
+
+def help_text(lang: str = "ja", prefix: str = "!") -> str:
     lines = ["使えるコマンド:" if lang == "ja" else "Available commands:"]
     for command in REGISTRY:
-        slash = command.slashes[0] if command.slashes else command.id
+        name = f"{prefix}{bang_name(command)}"
         desc = command.desc_ja if lang == "ja" else command.desc_en
-        lines.append(f"{slash} … {desc}")
+        lines.append(f"{name} … {desc}")
     return "\n".join(lines)

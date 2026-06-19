@@ -51,9 +51,12 @@ class CommandRegistryTests(unittest.TestCase):
     def test_help_text_localized(self) -> None:
         ja = commands.help_text("ja")
         en = commands.help_text("en")
-        self.assertIn("/status", ja)
+        self.assertIn("!status", ja)
         self.assertIn("最新の状況を報告", ja)
         self.assertIn("Report the latest status", en)
+
+    def test_help_text_honors_prefix(self) -> None:
+        self.assertIn("$status", commands.help_text("en", prefix="$"))
 
 
 if __name__ == "__main__":
