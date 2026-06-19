@@ -1,0 +1,27 @@
+# Example configuration for claude-messenger.
+#
+# `claude-messenger init` copies this to .claude-messenger/config.toml.
+# Fill in real values. Do NOT commit real tokens (NN8) — .claude-messenger/ is
+# gitignored. Any key can also be overridden by an uppercase env var
+# (e.g. SLACK_BOT_TOKEN). The config path env var is CLAUDE_MESSENGER_CONFIG.
+
+# --- Slack credentials (daemon-only; never leave the daemon) ---
+slack_bot_token = "xoxb-REPLACE-ME"          # Bot User OAuth token
+slack_app_token = "xapp-REPLACE-ME"          # App-level token, scope connections:write
+
+# --- Identity / channel allowlist (NN4) ---
+owner_slack_user_id = "U0REPLACEME"          # only this user may drive the agent
+allowed_slack_channel_id = "C0REPLACEME"     # the designated private channel
+
+# --- Local paths (host-specific; keep short — AF_UNIX path length limit) ---
+profile_path = ".claude-messenger/profile.json"
+audit_log_dir = ".claude-messenger/audit"
+kill_switch_path = ".claude-messenger/KILL_SWITCH"
+send_api_endpoint = ".claude-messenger/send.sock"
+inbound_event_path = "tmp/.slack_message"
+
+# --- Behavior ---
+default_agent = "claude"
+interpretation_mode = "flexible"             # "flexible" | "strict"
+max_chunk_chars = 3900
+audit_retention_days = 30

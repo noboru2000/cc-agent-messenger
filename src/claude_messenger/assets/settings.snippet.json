@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude-messenger send:*)",
+      "Bash(claude-messenger ping:*)",
+      "Bash(claude-messenger daemon:*)"
+    ]
+  }
+}

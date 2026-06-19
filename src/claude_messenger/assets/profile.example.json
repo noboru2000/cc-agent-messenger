@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "interpretation_mode": "flexible",
+  "max_chunk_chars": 3900,
+  "commands": [
+    { "trigger": "health_check", "patterns": ["生きてますか", "生きてる", "health"] },
+    { "trigger": "explain_status", "patterns": ["最新の状況を説明", "状況を説明", "状況", "status"] },
+    { "trigger": "report_issues", "patterns": ["不具合があれば報告", "不具合", "issues"] },
+    { "trigger": "report_results", "patterns": ["結果が出ていれば報告", "結果", "results"] },
+    { "trigger": "propose_options", "patterns": ["次に何をすべきか選択肢", "選択肢をあげて", "選択肢", "options"] },
+    { "trigger": "select_option", "patterns": ["番", "選択", "select"], "takes_index": true },
+    { "trigger": "continue", "patterns": ["処理を継続", "継続", "続行", "continue"] }
+  ],
+  "slash_map": {
+    "/health": "health_check",
+    "/status": "explain_status",
+    "/issues": "report_issues",
+    "/results": "report_results",
+    "/options": "propose_options",
+    "/select": "select_option",
+    "/continue": "continue"
+  },
+  "reaction_map": {
+    "one": { "trigger": "select_option", "args": { "index": 1 } },
+    "two": { "trigger": "select_option", "args": { "index": 2 } },
+    "three": { "trigger": "select_option", "args": { "index": 3 } },
+    "white_check_mark": { "trigger": "continue", "args": {} }
+  }
+}
