@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 import _helpers  # noqa: F401  (sets up sys.path)
-from claude_messenger.config import ConfigError, load_config
+from cc_agent_messenger.config import ConfigError, load_config
 
 _MINIMAL_TOML = """
 slack_bot_token = "xoxb-x"

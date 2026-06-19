@@ -147,13 +147,13 @@ def run(cfg: Config, ingress_enabled: bool = True, config_path: str | None = Non
     lifecycle.write_pidfile(cfg)
     try:
         if not ingress_enabled:
-            print(f"claude-messenger send API listening at {cfg.send_api_endpoint}")
+            print(f"cc-agent-messenger send API listening at {cfg.send_api_endpoint}")
             sendapi.serve(ctx)
             return
 
         thread = threading.Thread(target=sendapi.serve, args=(ctx,), daemon=True)
         thread.start()
-        print(f"claude-messenger send API at {cfg.send_api_endpoint}; starting Slack ingress (Socket Mode)")
+        print(f"cc-agent-messenger send API at {cfg.send_api_endpoint}; starting Slack ingress (Socket Mode)")
 
         from slack_bolt.adapter.socket_mode import SocketModeHandler
 

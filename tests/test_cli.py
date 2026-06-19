@@ -7,7 +7,7 @@ import unittest
 from contextlib import redirect_stdout
 
 import _helpers
-from claude_messenger import cli, sendapi
+from cc_agent_messenger import cli, sendapi
 
 
 class BuildRequestTests(unittest.TestCase):

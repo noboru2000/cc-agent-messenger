@@ -3,9 +3,9 @@ from __future__ import annotations
 import unittest
 
 import _helpers  # noqa: F401  (sets up sys.path)
-from claude_messenger import commands
-from claude_messenger.agentrunner import AgentSpec, build_c1_command
-from claude_messenger.router import Router
+from cc_agent_messenger import commands
+from cc_agent_messenger.agentrunner import AgentSpec, build_c1_command
+from cc_agent_messenger.router import Router
 
 
 class AgentRunnerTests(unittest.TestCase):

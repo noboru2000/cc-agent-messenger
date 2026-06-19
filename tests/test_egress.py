@@ -7,9 +7,9 @@ import tempfile
 import unittest
 
 import _helpers
-from claude_messenger import killswitch
-from claude_messenger.egress import handle_ping, handle_send
-from claude_messenger.models import SendRequest
+from cc_agent_messenger import killswitch
+from cc_agent_messenger.egress import handle_ping, handle_send
+from cc_agent_messenger.models import SendRequest
 
 
 class EgressTests(unittest.TestCase):

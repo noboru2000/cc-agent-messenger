@@ -1,16 +1,16 @@
 # Setup & operation
 
-End-to-end guide: create the Slack app, install `claude-messenger`, configure it,
+End-to-end guide: create the Slack app, install `cc-agent-messenger`, configure it,
 run it, and verify the round trip. Host-specific values use placeholders like
 `<bot-name>` / `<owner-user-id>` / `<channel-id>`. Real tokens stay local-only in
-`.claude-messenger/config.toml` (gitignored; never commit — NN8).
+`.cc-agent-messenger/config.toml` (gitignored; never commit — NN8).
 
 ```text
 iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
                                        │ authorize (NN4) + match command
                                        ▼
                                tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
-          iPhone push ◄── bot chat.postMessage ◄── claude-messenger send (Unix-socket send API)
+          iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
 ```
 
 ## 0. Prerequisites
@@ -24,9 +24,9 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
 
 ## 1. Install
 
-    uv tool install claude-messenger
+    uv tool install cc-agent-messenger
     # or from source:
-    uv tool install git+https://github.com/noboru2000/claude-messenger
+    uv tool install git+https://github.com/noboru2000/cc-agent-messenger
 
 ## 2. Create the Slack app
 
@@ -57,25 +57,25 @@ You must be a member of the private channel to invite the bot. Copy the channel 
 ## 4. Configure
 
     cd your-project
-    claude-messenger init
+    cc-agent-messenger init
 
-Edit `.claude-messenger/config.toml`: fill `slack_bot_token`, `slack_app_token`,
+Edit `.cc-agent-messenger/config.toml`: fill `slack_bot_token`, `slack_app_token`,
 `owner_slack_user_id`, `allowed_slack_channel_id`. Keep `send_api_endpoint` short
 (AF_UNIX path length limit).
 
 ## 5. Run the daemon & verify the return path
 
-    claude-messenger daemon
+    cc-agent-messenger daemon
     # in a second terminal (or after exporting the socket path):
-    claude-messenger doctor                # config / token / channel / socket checks
-    claude-messenger ping                  # -> {"status":"alive"}
-    claude-messenger send --text "test"    # -> posts to your channel; phone gets a push
+    cc-agent-messenger doctor                # config / token / channel / socket checks
+    cc-agent-messenger ping                  # -> {"status":"alive"}
+    cc-agent-messenger send --text "test"    # -> posts to your channel; phone gets a push
 
 ## 6. Run the live session (C0 monitor mode)
 
-In your VS Code Claude Code session, invoke the **`claude-messenger`** skill. It
+In your VS Code Claude Code session, invoke the **`cc-agent-messenger`** skill. It
 arms `tail -n 0 -f <inbound_event_path>` and replies to each command via
-`claude-messenger send`. To make replies hands-free, add the allow-rule printed by
+`cc-agent-messenger send`. To make replies hands-free, add the allow-rule printed by
 `init` to `.claude/settings.json` (the tool never self-grants it).
 
 ## 7. End-to-end test
@@ -83,7 +83,7 @@ arms `tail -n 0 -f <inbound_event_path>` and replies to each command via
 From the iPhone Slack app, in the private channel, send `/status` (or
 `@<bot-name> 最新の状況を教えて`). The daemon appends one JSONL line; the Monitor
 wakes the live session; it composes a concise status and calls
-`claude-messenger send`; the bot posts the reply mentioning you; your phone is
+`cc-agent-messenger send`; the bot posts the reply mentioning you; your phone is
 pushed.
 
 ## 8. Multiple agents (optional) & multiple projects
@@ -100,8 +100,8 @@ pushed.
 
 ## 9. Kill switch & audit
 
-    claude-messenger kill on     # halt all inbound/outbound
-    claude-messenger kill off    # resume
+    cc-agent-messenger kill on     # halt all inbound/outbound
+    cc-agent-messenger kill off    # resume
 
 Every inbound/outbound action is one JSONL line under `audit_log_dir`
 (`audit-YYYYMMDD.jsonl`), date-rotated and retention-bounded.
@@ -116,7 +116,7 @@ Every inbound/outbound action is one JSONL line under `audit_log_dir`
 - **`channel_not_found`** → invite the bot to the (private) channel (step 3), and
   confirm the channel belongs to the same workspace as the tokens.
 - **Socket bind error** → `send_api_endpoint` is too long; use a short path like
-  `.claude-messenger/send.sock`.
+  `.cc-agent-messenger/send.sock`.
 - **Slash command does nothing** → it is not registered in the app (step 2.4), or
   Event Subscriptions is not enabled (step 2.5).
 - **Hands-free not applying** → a newly created `.claude/settings.json` is not

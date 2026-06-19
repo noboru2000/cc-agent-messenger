@@ -13,7 +13,7 @@ dist/
 .coverage
 
 # Secrets & local runtime (never commit) ------------------------------------
-.claude-messenger/
+.cc-agent-messenger/
 tmp/
 *.sock
 .env

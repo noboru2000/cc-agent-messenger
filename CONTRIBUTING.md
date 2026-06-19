@@ -5,8 +5,8 @@ changes small and reviewable, and add or update tests for every behavior change.
 
 ## Development setup
 
-    git clone https://github.com/noboru2000/claude-messenger
-    cd claude-messenger
+    git clone https://github.com/noboru2000/cc-agent-messenger
+    cd cc-agent-messenger
     uv sync --extra dev
     uv run pytest
 
@@ -19,7 +19,7 @@ The test suite runs offline (Slack is mocked). You can also run it without `uv`:
 - Type-annotate public functions; avoid OS-specific assumptions and hard-coded
   machine paths (use config).
 - Never commit secrets or host-specific values — keep them under
-  `.claude-messenger/` (gitignored).
+  `.cc-agent-messenger/` (gitignored).
 - Keep the security model intact (see [SECURITY.md](SECURITY.md)): single
   operator, authorization, kill switch, audit, local-only token handling.
 - Discuss larger changes (e.g. multi-agent wiring, new transports) in an issue

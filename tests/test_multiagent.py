@@ -5,9 +5,9 @@ import tempfile
 import unittest
 
 import _helpers
-from claude_messenger import egress
-from claude_messenger.models import SendRequest
-from claude_messenger.multiagent import (
+from cc_agent_messenger import egress
+from cc_agent_messenger.models import SendRequest
+from cc_agent_messenger.multiagent import (
     AgentConfig,
     build_router,
     dispatch_inbound,

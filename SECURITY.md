@@ -1,6 +1,6 @@
 # Security Policy
 
-`claude-messenger` lets Slack messages drive AI coding agents that can run
+`cc-agent-messenger` lets Slack messages drive AI coding agents that can run
 commands. Treat it as a **remote-code-execution-adjacent** tool and operate it
 accordingly.
 
@@ -16,14 +16,14 @@ accordingly.
 ## Token handling
 
 - The Slack bot token (`xoxb-…`) and app token (`xapp-…`) live **only** in your
-  local `.claude-messenger/config.toml` (gitignored) and inside the daemon. They
+  local `.cc-agent-messenger/config.toml` (gitignored) and inside the daemon. They
   are **never** committed and never sent to the reply CLI or the live session.
 - The shipped templates contain placeholders only.
 
 ## Hands-free auto-reply is a conscious risk
 
 Making replies hands-free requires adding an allow-rule (e.g.
-`Bash(claude-messenger send:*)`) to your `.claude/settings.json`, which grants
+`Bash(cc-agent-messenger send:*)`) to your `.claude/settings.json`, which grants
 **auto-execution** of the reply command without a per-call prompt. This is a
 deliberate trade-off you accept. The tool **prints** the rule; it never grants it
 for you.
@@ -33,7 +33,7 @@ for you.
 - **Closed command set** for the common path; free text is mapped to the same
   closed handler set, and destructive/irreversible actions require explicit
   in-Slack approval (NN5).
-- **Kill switch** (`claude-messenger kill on`) halts all inbound/outbound at once.
+- **Kill switch** (`cc-agent-messenger kill on`) halts all inbound/outbound at once.
 - **Audit log** records every inbound and outbound action (rotated, retention-
   bounded, payloads truncated).
 - **Headless agents (C1)** run commands — confine each per its tool's controls

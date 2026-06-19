@@ -1,4 +1,4 @@
-"""Diagnostics: `claude-messenger doctor` (and the remote `/doctor` payload).
+"""Diagnostics: `cc-agent-messenger doctor` (and the remote `/doctor` payload).
 
 See ``docs/PACKAGE_DESIGN.md`` §8. Read-only checks over config, paths, kill
 switch, and (optionally) Slack auth + channel membership. Returns a list of

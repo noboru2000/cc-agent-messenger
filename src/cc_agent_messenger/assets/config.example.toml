@@ -1,9 +1,9 @@
-# Example configuration for claude-messenger.
+# Example configuration for cc-agent-messenger.
 #
-# `claude-messenger init` copies this to .claude-messenger/config.toml.
-# Fill in real values. Do NOT commit real tokens (NN8) — .claude-messenger/ is
+# `cc-agent-messenger init` copies this to .cc-agent-messenger/config.toml.
+# Fill in real values. Do NOT commit real tokens (NN8) — .cc-agent-messenger/ is
 # gitignored. Any key can also be overridden by an uppercase env var
-# (e.g. SLACK_BOT_TOKEN). The config path env var is CLAUDE_MESSENGER_CONFIG.
+# (e.g. SLACK_BOT_TOKEN). The config path env var is CC_AGENT_MESSENGER_CONFIG.
 
 # --- Slack credentials (daemon-only; never leave the daemon) ---
 slack_bot_token = "xoxb-REPLACE-ME"          # Bot User OAuth token
@@ -14,10 +14,10 @@ owner_slack_user_id = "U0REPLACEME"          # only this user may drive the agen
 allowed_slack_channel_id = "C0REPLACEME"     # the designated private channel
 
 # --- Local paths (host-specific; keep short — AF_UNIX path length limit) ---
-profile_path = ".claude-messenger/profile.json"
-audit_log_dir = ".claude-messenger/audit"
-kill_switch_path = ".claude-messenger/KILL_SWITCH"
-send_api_endpoint = ".claude-messenger/send.sock"
+profile_path = ".cc-agent-messenger/profile.json"
+audit_log_dir = ".cc-agent-messenger/audit"
+kill_switch_path = ".cc-agent-messenger/KILL_SWITCH"
+send_api_endpoint = ".cc-agent-messenger/send.sock"
 inbound_event_path = "tmp/.slack_message"
 
 # --- Behavior ---

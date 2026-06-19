@@ -1,4 +1,4 @@
-"""claude_messenger — Slack message-turn bridge (C0 loop).
+"""cc_agent_messenger — Slack message-turn bridge (C0 loop).
 
 Phase 3 implementation. This first increment covers the return path: the
 host-side send API (Unix-socket egress chokepoint) and its CLI client, plus the

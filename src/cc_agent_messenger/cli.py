@@ -1,4 +1,4 @@
-"""Unified CLI — `claude-messenger <subcommand>`.
+"""Unified CLI — `cc-agent-messenger <subcommand>`.
 
 Subcommands: init / daemon / send / ping / status / stop / kill / doctor.
 See ``docs/PACKAGE_DESIGN.md`` §5–§6. The send/ping/status paths talk to the
@@ -127,8 +127,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def cmd_init(args: argparse.Namespace) -> int:
     project = os.path.abspath(args.dir)
-    skill_dir = os.path.join(project, ".claude", "skills", "claude-messenger")
-    local_dir = os.path.join(project, ".claude-messenger")
+    skill_dir = os.path.join(project, ".claude", "skills", "cc-agent-messenger")
+    local_dir = os.path.join(project, ".cc-agent-messenger")
     os.makedirs(skill_dir, exist_ok=True)
     os.makedirs(local_dir, exist_ok=True)
 
@@ -139,22 +139,22 @@ def cmd_init(args: argparse.Namespace) -> int:
             shutil.copyfile(os.path.join(_ASSETS, src), target)
 
     gitignore = os.path.join(project, ".gitignore")
-    needed = [".claude-messenger/", "tmp/", "*.sock"]
+    needed = [".cc-agent-messenger/", "tmp/", "*.sock"]
     existing = open(gitignore, encoding="utf-8").read() if os.path.exists(gitignore) else ""
     add = [e for e in needed if e not in existing]
     if add:
         with open(gitignore, "a", encoding="utf-8") as handle:
-            handle.write("\n# claude-messenger\n" + "\n".join(add) + "\n")
+            handle.write("\n# cc-agent-messenger\n" + "\n".join(add) + "\n")
 
     snippet = open(os.path.join(_ASSETS, "settings.snippet.json"), encoding="utf-8").read()
-    print("claude-messenger initialized.")
+    print("cc-agent-messenger initialized.")
     print(f"  skill : {skill_dir}/SKILL.md")
     print(f"  config: {local_dir}/config.toml  (fill in tokens; gitignored)")
     print("\nNEXT — add this to .claude/settings.json (the agent cannot self-grant it):")
     print(snippet.rstrip())
     print(
         "\nThen: create the Slack app, fill the config, run "
-        "`claude-messenger daemon`, and invoke the claude-messenger skill in Claude Code."
+        "`cc-agent-messenger daemon`, and invoke the cc-agent-messenger skill in Claude Code."
     )
     return 0
 
@@ -163,7 +163,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 # parser
 # --------------------------------------------------------------------------- #
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="claude-messenger", description="Slack message-turn bridge to AI coding agents")
+    parser = argparse.ArgumentParser(prog="cc-agent-messenger", description="Slack message-turn bridge to AI coding agents")
     parser.add_argument("--config", default=None, help=f"config path (default: {DEFAULT_CONFIG_PATH})")
     sub = parser.add_subparsers(dest="command", required=True)
 

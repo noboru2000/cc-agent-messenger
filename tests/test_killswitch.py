@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 import _helpers  # noqa: F401
-from claude_messenger import killswitch
+from cc_agent_messenger import killswitch
 
 
 class KillSwitchTests(unittest.TestCase):

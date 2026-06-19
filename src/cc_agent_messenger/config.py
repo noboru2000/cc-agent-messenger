@@ -1,7 +1,7 @@
 """Local configuration loading and validation.
 
 Configuration is local-only; real tokens and host paths live under
-``.claude-messenger/`` and are never committed (NN8).
+``.cc-agent-messenger/`` and are never committed (NN8).
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ import os
 import tomllib
 from dataclasses import dataclass
 
-DEFAULT_CONFIG_PATH = ".claude-messenger/config.toml"
-CONFIG_PATH_ENV = "CLAUDE_MESSENGER_CONFIG"
+DEFAULT_CONFIG_PATH = ".cc-agent-messenger/config.toml"
+CONFIG_PATH_ENV = "CC_AGENT_MESSENGER_CONFIG"
 
 # Keys with no default; load_config raises if any is missing.
 _REQUIRED = (

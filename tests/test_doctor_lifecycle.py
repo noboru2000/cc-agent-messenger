@@ -5,8 +5,8 @@ import tempfile
 import unittest
 
 import _helpers
-from claude_messenger import killswitch, lifecycle
-from claude_messenger.doctor import format_checks, run_doctor
+from cc_agent_messenger import killswitch, lifecycle
+from cc_agent_messenger.doctor import format_checks, run_doctor
 
 
 class DoctorTests(unittest.TestCase):

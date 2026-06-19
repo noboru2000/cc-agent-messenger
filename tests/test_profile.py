@@ -4,10 +4,10 @@ import os
 import unittest
 
 import _helpers  # noqa: F401
-from claude_messenger.profile import load_profile, match_command, split_for_slack
+from cc_agent_messenger.profile import load_profile, match_command, split_for_slack
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_EXAMPLE = os.path.join(_ROOT, "src", "claude_messenger", "assets", "profile.example.json")
+_EXAMPLE = os.path.join(_ROOT, "src", "cc_agent_messenger", "assets", "profile.example.json")
 
 
 class MatchTests(unittest.TestCase):

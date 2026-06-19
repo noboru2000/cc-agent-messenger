@@ -12,9 +12,9 @@ import sys
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT / "src"))
 
-from claude_messenger.config import Config  # noqa: E402
-from claude_messenger.context import AppContext  # noqa: E402
-from claude_messenger.profile import CommandRule, Profile  # noqa: E402
+from cc_agent_messenger.config import Config  # noqa: E402
+from cc_agent_messenger.context import AppContext  # noqa: E402
+from cc_agent_messenger.profile import CommandRule, Profile  # noqa: E402
 
 _SOCK_COUNTER = itertools.count()
 

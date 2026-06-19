@@ -6,8 +6,8 @@ import tempfile
 import unittest
 
 import _helpers
-from claude_messenger.audit import purge_expired, truncate_summary, write_entry
-from claude_messenger.models import AuditEntry
+from cc_agent_messenger.audit import purge_expired, truncate_summary, write_entry
+from cc_agent_messenger.models import AuditEntry
 
 
 def _entry(ts: str) -> AuditEntry:

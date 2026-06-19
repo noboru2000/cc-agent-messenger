@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="claude-messenger logo" width="160">
+  <img src="docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
 </p>
 
-# claude-messenger
+# cc-agent-messenger
 
 **English** | [日本語](README.ja.md)
 
@@ -23,7 +23,7 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
                                        │ authorize (NN4) + match command
                                        ▼
                                tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
-          iPhone push ◄── bot chat.postMessage ◄── claude-messenger send (Unix-socket send API)
+          iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
 ```
 
 ## What it does
@@ -45,30 +45,30 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
 
 ## Install
 
-    uv tool install claude-messenger
+    uv tool install cc-agent-messenger
     # or from source:
-    uv tool install git+https://github.com/noboru2000/claude-messenger
+    uv tool install git+https://github.com/noboru2000/cc-agent-messenger
 
 ## Quickstart
 
     cd your-project
-    claude-messenger init          # scaffolds the skill, config template, gitignore, allowlist
+    cc-agent-messenger init          # scaffolds the skill, config template, gitignore, allowlist
     # 1) create a Slack app (Socket Mode + scopes + Event Subscriptions); see docs/SETUP.md
-    # 2) fill .claude-messenger/config.toml with your tokens + channel id
-    claude-messenger daemon        # run the resident bot
+    # 2) fill .cc-agent-messenger/config.toml with your tokens + channel id
+    cc-agent-messenger daemon        # run the resident bot
 
     # verify the return path:
-    claude-messenger ping          # -> {"status":"alive"}
-    claude-messenger send --text "test"   # -> posts to your channel; phone gets a push
+    cc-agent-messenger ping          # -> {"status":"alive"}
+    cc-agent-messenger send --text "test"   # -> posts to your channel; phone gets a push
 
-Then, in your VS Code Claude Code session, invoke the **`claude-messenger`** skill
+Then, in your VS Code Claude Code session, invoke the **`cc-agent-messenger`** skill
 to start watching the channel and replying. Add the printed allow-rule to
 `.claude/settings.json` to make replies hands-free.
 
 ## Commands
 
-`claude-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
-— see `claude-messenger --help`. From Slack: `/help`, `/status`, `/options`,
+`cc-agent-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
+— see `cc-agent-messenger --help`. From Slack: `/help`, `/status`, `/options`,
 `/continue`, `/doctor`, or just `@bot <message>`.
 
 ## Limitations

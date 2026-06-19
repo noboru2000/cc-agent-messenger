@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="claude-messenger logo" width="160">
+  <img src="docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
 </p>
 
-# claude-messenger
+# cc-agent-messenger
 
 [English](README.md) | **日本語**
 
@@ -22,7 +22,7 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
                                        │ 認可(NN4)+ コマンド照合
                                        ▼
                                tmp/.slack_message  ◄── tail -f Monitor(ライブ Claude セッション)
-          iPhone プッシュ ◄── bot chat.postMessage ◄── claude-messenger send(Unix socket 送信 API)
+          iPhone プッシュ ◄── bot chat.postMessage ◄── cc-agent-messenger send(Unix socket 送信 API)
 ```
 
 ## 何ができるか
@@ -42,29 +42,29 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## インストール
 
-    uv tool install claude-messenger
+    uv tool install cc-agent-messenger
     # ソースから:
-    uv tool install git+https://github.com/noboru2000/claude-messenger
+    uv tool install git+https://github.com/noboru2000/cc-agent-messenger
 
 ## クイックスタート
 
     cd your-project
-    claude-messenger init          # skill / 設定テンプレ / .gitignore / allowlist を配置
+    cc-agent-messenger init          # skill / 設定テンプレ / .gitignore / allowlist を配置
     # 1) Slack アプリ作成(Socket Mode + スコープ + Event Subscriptions);docs/SETUP.md
-    # 2) .claude-messenger/config.toml にトークン + チャンネル ID を記入
-    claude-messenger daemon        # 常駐 bot 起動
+    # 2) .cc-agent-messenger/config.toml にトークン + チャンネル ID を記入
+    cc-agent-messenger daemon        # 常駐 bot 起動
 
-    claude-messenger ping          # -> {"status":"alive"}
-    claude-messenger send --text "テスト"   # -> チャネルに投稿、スマホにプッシュ
+    cc-agent-messenger ping          # -> {"status":"alive"}
+    cc-agent-messenger send --text "テスト"   # -> チャネルに投稿、スマホにプッシュ
 
-その後、VS Code の Claude Code セッションで **`claude-messenger`** スキルを起動して
+その後、VS Code の Claude Code セッションで **`cc-agent-messenger`** スキルを起動して
 待ち受け開始。`init` が表示する allow ルールを `.claude/settings.json` に貼ると
 ハンズフリーになります。
 
 ## コマンド
 
-`claude-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
-— 詳細は `claude-messenger --help`。Slack からは `/help`、`/status`、`/options`、
+`cc-agent-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
+— 詳細は `cc-agent-messenger --help`。Slack からは `/help`、`/status`、`/options`、
 `/continue`、`/doctor`、または `@bot <メッセージ>`。
 
 ## 制限

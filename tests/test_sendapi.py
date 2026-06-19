@@ -9,7 +9,7 @@ import threading
 import unittest
 
 import _helpers
-from claude_messenger import sendapi
+from cc_agent_messenger import sendapi
 
 
 class DispatchTests(unittest.TestCase):

@@ -1,6 +1,6 @@
 # Architecture
 
-`claude-messenger` bridges a Slack channel to AI coding agents running on your Mac,
+`cc-agent-messenger` bridges a Slack channel to AI coding agents running on your Mac,
 as **complete message turns** (not live terminal mirroring). It is two halves: a
 Python daemon/CLI, and a Claude Code skill the live session runs.
 
@@ -15,7 +15,7 @@ Slack channel ──► resident bot (Bolt + Socket Mode)
                     ▼  tail -f Monitor in the live VS Code Claude Code session
               live session wakes, interprets, composes a reply
                     │
-                    ▼  claude-messenger send (Unix-socket send API)
+                    ▼  cc-agent-messenger send (Unix-socket send API)
               egress chokepoint ──► bot chat.postMessage (@owner) ──► your phone
 ```
 
@@ -24,7 +24,7 @@ Slack channel ──► resident bot (Bolt + Socket Mode)
   owner + channel, matched to a command `trigger`, and appended as one JSONL line.
 - **Wake:** the live session's `tail -f` Monitor delivers the appended line as an
   event and wakes the otherwise-idle session.
-- **Outbound (egress):** the live session replies via `claude-messenger send`,
+- **Outbound (egress):** the live session replies via `cc-agent-messenger send`,
   which goes through the **egress chokepoint** in the daemon.
 
 ## The egress chokepoint (every outbound post)
@@ -73,7 +73,7 @@ closed effective command set + NN5 approval for dangerous actions; secrets
 local-only (NN8). Hands-free auto-reply is a conscious allowlist grant. See
 [../SECURITY.md](../SECURITY.md).
 
-## Components (`src/claude_messenger/`)
+## Components (`src/cc_agent_messenger/`)
 
 `config` · `models` · `profile` (command matcher + split) · `authz` · `killswitch`
 · `audit` · `slackclient` (bot-token holder) · `context` · `egress` (chokepoint) ·
@@ -83,12 +83,12 @@ local-only (NN8). Hands-free auto-reply is a conscious allowlist grant. See
 
 ## Layout & extensibility
 
-### Why `src/claude_messenger/` (the "src layout")
+### Why `src/cc_agent_messenger/` (the "src layout")
 
-Standard PyPA layout: the importable package is `claude_messenger`; tests run
+Standard PyPA layout: the importable package is `cc_agent_messenger`; tests run
 against the *installed* package (catching packaging bugs a flat layout hides), and
-the package boundary is unambiguous. (`claude-messenger` is the distribution / repo
-name; `claude_messenger` — underscore — is the import name, since Python packages
+the package boundary is unambiguous. (`cc-agent-messenger` is the distribution / repo
+name; `cc_agent_messenger` — underscore — is the import name, since Python packages
 cannot contain hyphens.) Keep it; do not flatten modules directly under `src/`.
 
 ### Two orthogonal plugin axes
@@ -103,7 +103,7 @@ cannot contain hyphens.) Keep it; do not flatten modules directly under `src/`.
 Planned structure once a second messaging tool (e.g. LINE / Teams) lands:
 
 ```text
-src/claude_messenger/
+src/cc_agent_messenger/
 ├── core/          # transport-agnostic: egress chokepoint, profile/commands,
 │                  #   authz, killswitch, audit, send API + CLI, the agent layer
 └── transports/

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cc-agent-messenger send:*)",
+      "Bash(cc-agent-messenger ping:*)",
+      "Bash(cc-agent-messenger daemon:*)"
+    ]
+  }
+}

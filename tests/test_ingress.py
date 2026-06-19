@@ -7,8 +7,8 @@ import tempfile
 import unittest
 
 import _helpers
-from claude_messenger import ingress, killswitch
-from claude_messenger.profile import Profile, CommandRule
+from cc_agent_messenger import ingress, killswitch
+from cc_agent_messenger.profile import Profile, CommandRule
 
 
 def _profile() -> Profile:
