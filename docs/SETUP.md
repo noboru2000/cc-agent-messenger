@@ -180,7 +180,56 @@ see the **[command reference → docs/USAGE.md](USAGE.md)**.
 Every inbound/outbound action is one JSONL line under `audit_log_dir`
 (`audit-YYYYMMDD.jsonl`), date-rotated and retention-bounded.
 
-## 10. Uninstall / cleanup
+## 10. Update / upgrade
+
+Upgrading keeps your **bot info**: tokens, owner, channel, audit log, and
+`profile.json` all live in `.cc-agent-messenger/` and are **never** touched by an
+upgrade.
+
+1. **Upgrade the CLI:**
+
+       uv tool upgrade cc-agent-messenger          # installed from PyPI
+       # installed from git instead? reinstall the latest:
+       uv tool install --reinstall git+https://github.com/noboru2000/cc-agent-messenger
+
+   Confirm the new version:
+
+       cc-agent-messenger --version
+
+2. **Refresh the project scaffold** — re-run `init` in the same project. It
+   **refreshes the skill** to the new version and **preserves** your `config.toml`
+   and `profile.json` (it prints what it refreshed vs kept):
+
+       cd your-project
+       cc-agent-messenger init
+
+3. **Restart the daemon** so it runs the new code (a running daemon holds the old
+   version in memory):
+
+       cc-agent-messenger stop        # or Ctrl+C in its terminal
+       cc-agent-messenger daemon
+
+4. **Reload the live session** so the refreshed skill loads: in VS Code,
+   Command+Shift+P → "Developer: Reload Window", then re-invoke
+   `/cc-agent-messenger`.
+
+5. **Verify:**
+
+       cc-agent-messenger doctor
+       cc-agent-messenger ping        # -> {"status":"alive"}
+
+**Picking up new profile defaults (optional).** Your existing `profile.json` keeps
+working across upgrades — e.g. the `!` command prefix defaults on even if your
+profile predates it (`init` will point this out). To adopt new profile defaults
+(new commands like `!help` / `!doctor`, the empty `slash_map`), regenerate it; the
+old file is backed up to `profile.json.bak`:
+
+    cc-agent-messenger init --refresh-profile
+
+If you had customized `profile.json`, re-apply your edits on top of the new file
+(diff it against the `.bak`).
+
+## 11. Uninstall / cleanup
 
     cc-agent-messenger uninstall            # remove the skill + the .gitignore block (keeps your config)
     cc-agent-messenger uninstall --purge    # also delete .cc-agent-messenger/ (config, profile, audit)
@@ -190,7 +239,7 @@ Every inbound/outbound action is one JSONL line under `audit_log_dir`
 the `cc-agent-messenger` allow-rules there yourself (the tool cannot self-modify
 permissions).
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 - **No iPhone push (badge appears, no banner):** Slack mobile **notification
   schedule** must include the current time; you must not be "active on desktop"

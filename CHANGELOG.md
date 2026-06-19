@@ -7,6 +7,14 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- `--version` flag; author/contact/copyright metadata (pyproject author+maintainer
+  email, `__author__`/`__email__`/`__license__`/`__copyright__`, per-file SPDX
+  headers).
+- **Upgrade-safe `init`**: re-running `init` refreshes the skill to the installed
+  version while preserving `config.toml` (tokens/owner/channel) and `profile.json`;
+  per-file refreshed/kept report; `--refresh-profile` regenerates the profile from
+  the template (backing up the old one to `profile.json.bak`); migration hint when
+  an existing profile predates `command_prefix`. See SETUP.md §10 (Update/upgrade).
 - **Explicit command prefix** (`command_prefix`, default `!`): send `@bot !status`,
   `!select 2`, `!doctor`, … for deterministic, exactly-resolved commands that need
   **no Slack slash registration** and dodge Slack's reserved-word slashes

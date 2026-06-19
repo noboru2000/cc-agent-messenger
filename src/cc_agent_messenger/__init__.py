@@ -10,7 +10,16 @@ Slack ingress (Bolt + Socket Mode) is a later increment.
 See ``docs/DETAILED_DESIGN.md`` for the contracts implemented here.
 """
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
+
+try:
+    # Single source of truth = pyproject `[project].version` (read from the
+    # installed distribution's metadata). Never hard-code the version here.
+    __version__ = _pkg_version("cc-agent-messenger")
+except PackageNotFoundError:  # running from a source tree without an install
+    __version__ = "0.0.0+source"
+
 __author__ = "Noboru Harada"
 __email__ = "noboru@ieee.org"
 __license__ = "MIT"

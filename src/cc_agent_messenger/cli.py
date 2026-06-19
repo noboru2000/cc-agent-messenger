@@ -15,7 +15,7 @@ import os
 import shutil
 import sys
 
-from . import ipcclient, killswitch, lifecycle
+from . import __version__, ipcclient, killswitch, lifecycle
 from .config import DEFAULT_CONFIG_PATH, load_config
 from .doctor import format_checks, run_doctor
 
@@ -128,17 +128,58 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def cmd_init(args: argparse.Namespace) -> int:
+    """Scaffold (first run) or upgrade (re-run) the host project.
+
+    Idempotent and **upgrade-safe**: the skill is always refreshed to the installed
+    version, while ``config.toml`` (your tokens/owner/channel) and ``profile.json``
+    are **preserved** unless you pass ``--refresh-profile`` (which backs up the old
+    profile first). Re-running ``init`` after `uv tool upgrade` is the upgrade path.
+    """
+
     project = os.path.abspath(args.dir)
     skill_dir = os.path.join(project, ".claude", "skills", "cc-agent-messenger")
     local_dir = os.path.join(project, ".cc-agent-messenger")
     os.makedirs(skill_dir, exist_ok=True)
     os.makedirs(local_dir, exist_ok=True)
 
+    actions: list[str] = []
+    profile_hint: str | None = None
+
+    # Skill — always refreshed to the installed version (no user data in it).
     shutil.copyfile(os.path.join(_ASSETS, "skill", "SKILL.md"), os.path.join(skill_dir, "SKILL.md"))
-    for src, dst in (("config.example.toml", "config.toml"), ("profile.example.json", "profile.json")):
-        target = os.path.join(local_dir, dst)
-        if not os.path.exists(target):
-            shutil.copyfile(os.path.join(_ASSETS, src), target)
+    actions.append(f"refreshed {skill_dir}/SKILL.md")
+
+    # config.toml — never overwritten (holds your tokens); created only if absent.
+    config_target = os.path.join(local_dir, "config.toml")
+    if os.path.exists(config_target):
+        actions.append(f"kept      {config_target} (tokens/owner/channel preserved)")
+    else:
+        shutil.copyfile(os.path.join(_ASSETS, "config.example.toml"), config_target)
+        actions.append(f"created   {config_target} (fill in tokens; gitignored)")
+
+    # profile.json — kept by default; --refresh-profile regenerates it (with backup).
+    profile_target = os.path.join(local_dir, "profile.json")
+    if not os.path.exists(profile_target):
+        shutil.copyfile(os.path.join(_ASSETS, "profile.example.json"), profile_target)
+        actions.append(f"created   {profile_target}")
+    elif args.refresh_profile:
+        backup = profile_target + ".bak"
+        shutil.copyfile(profile_target, backup)
+        shutil.copyfile(os.path.join(_ASSETS, "profile.example.json"), profile_target)
+        actions.append(f"refreshed {profile_target} (backup: {backup})")
+    else:
+        actions.append(f"kept      {profile_target} (use --refresh-profile to regenerate)")
+        try:
+            data = json.load(open(profile_target, encoding="utf-8"))
+            if "command_prefix" not in data:
+                profile_hint = (
+                    "this profile.json predates the '!' command prefix. It still works "
+                    "(prefix defaults to '!'), but to pick up the new commands (!help / "
+                    "!doctor) and the empty slash_map, run:\n"
+                    "        cc-agent-messenger init --refresh-profile"
+                )
+        except Exception:
+            pass
 
     gitignore = os.path.join(project, ".gitignore")
     needed = [".cc-agent-messenger/", "tmp/", "*.sock"]
@@ -147,16 +188,21 @@ def cmd_init(args: argparse.Namespace) -> int:
     if add:
         with open(gitignore, "a", encoding="utf-8") as handle:
             handle.write("\n# cc-agent-messenger\n" + "\n".join(add) + "\n")
+        actions.append(f"updated   {gitignore} (.cc-agent-messenger/ block)")
 
     snippet = open(os.path.join(_ASSETS, "settings.snippet.json"), encoding="utf-8").read()
-    print("cc-agent-messenger initialized.")
-    print(f"  skill : {skill_dir}/SKILL.md")
-    print(f"  config: {local_dir}/config.toml  (fill in tokens; gitignored)")
-    print("\nNEXT — add this to .claude/settings.json (the agent cannot self-grant it):")
+    print(f"cc-agent-messenger init — v{__version__}")
+    for action in actions:
+        print(f"  {action}")
+    if profile_hint:
+        print(f"\nNOTE: {profile_hint}")
+    print("\nNEXT — ensure this allow-rule is in .claude/settings.json (the agent cannot self-grant it):")
     print(snippet.rstrip())
     print(
-        "\nThen: create the Slack app, fill the config, run "
-        "`cc-agent-messenger daemon`, and invoke the cc-agent-messenger skill in Claude Code."
+        "\nFirst run: create the Slack app, fill the config, run `cc-agent-messenger daemon`,\n"
+        "  then invoke the cc-agent-messenger skill in Claude Code.\n"
+        "Upgrading: restart the daemon (Ctrl+C or `cc-agent-messenger stop`, then "
+        "`cc-agent-messenger daemon`)\n  and reload the VS Code window so the refreshed skill loads."
     )
     return 0
 
@@ -227,11 +273,13 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
 # --------------------------------------------------------------------------- #
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cc-agent-messenger", description="Slack message-turn bridge to AI coding agents")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--config", default=None, help=f"config path (default: {DEFAULT_CONFIG_PATH})")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_init = sub.add_parser("init", help="scaffold the host project (skill, config, allowlist)")
+    p_init = sub.add_parser("init", help="scaffold (first run) or upgrade (re-run) the host project")
     p_init.add_argument("--dir", default=".", help="project directory (default: cwd)")
+    p_init.add_argument("--refresh-profile", action="store_true", help="regenerate profile.json from the template (backs up the old one to .bak)")
     p_init.set_defaults(func=cmd_init)
 
     p_uninstall = sub.add_parser("uninstall", help="reverse init (remove skill + gitignore block; --purge also deletes config/audit)")
