@@ -67,7 +67,7 @@ to start watching the channel and replying. Add the printed allow-rule to
 
 ## Commands
 
-`cc-agent-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
+`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor>`
 — see `cc-agent-messenger --help`. From Slack: `/help`, `/status`, `/options`,
 `/continue`, `/doctor`, or just `@bot <message>`.
 

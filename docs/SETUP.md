@@ -17,16 +17,44 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
 
 - macOS or Linux/WSL, VS Code + the Claude Code extension, Python ≥ 3.11, `uv`.
 - A Slack workspace and one **private** channel for you only.
-- **Per agent (C1 only):** the agent's own CLI installed + authenticated.
-  Claude via the live session (C0) needs no extra CLI.
-  - Codex: `codex` CLI (authenticated).
-  - Copilot: `npm install -g @github/copilot`, then `copilot` → `/login`.
+
+### Choose how each agent connects: C0 (live) vs C1 (headless)
+
+The bridge can answer in one of two modes per agent:
+
+- **C0 — live session:** the reply comes *from your already-open Claude Code
+  session* (live context, instant). **Claude Code only. No extra CLI.**
+- **C1 — headless:** the bridge runs the agent's **CLI** headlessly, one turn per
+  message. Works for any agent, but you must install + authenticate that CLI, and
+  it runs in a *separate* context from the agent's VS Code panel.
+
+| Agent (mode) | Extra CLI to install + authenticate |
+|---|---|
+| **Claude Code — live session (C0)** | **none — ⭐ Recommended** (reuses the live VS Code session) |
+| Claude Code — headless (C1) | `claude` CLI (ships with Claude Code; authenticate it) |
+| Codex (C1) | `codex` CLI, authenticated |
+| Copilot (C1) | `npm install -g @github/copilot`, then `copilot` → `/login` |
+
+Start with **Claude Code live (C0)** — nothing extra to install. Add Codex/Copilot
+(C1) later only if you want those agents.
 
 ## 1. Install
 
+**From PyPI** (once published):
+
     uv tool install cc-agent-messenger
-    # or from source:
+    # alternatives:
+    pipx install cc-agent-messenger
+    pip install cc-agent-messenger          # then run the `cc-agent-messenger` command
+    uv add cc-agent-messenger               # as a project dependency; run via `uv run cc-agent-messenger`
+
+**From the GitHub repo** (works before a PyPI release):
+
     uv tool install git+https://github.com/noboru2000/cc-agent-messenger
+
+Either way you get the global `cc-agent-messenger` command. Verify:
+
+    cc-agent-messenger --help
 
 ## 2. Create the Slack app
 
@@ -106,7 +134,17 @@ pushed.
 Every inbound/outbound action is one JSONL line under `audit_log_dir`
 (`audit-YYYYMMDD.jsonl`), date-rotated and retention-bounded.
 
-## 10. Troubleshooting
+## 10. Uninstall / cleanup
+
+    cc-agent-messenger uninstall            # remove the skill + the .gitignore block (keeps your config)
+    cc-agent-messenger uninstall --purge    # also delete .cc-agent-messenger/ (config, profile, audit)
+    uv tool uninstall cc-agent-messenger    # remove the global CLI
+
+`uninstall` reverses `init`. It does **not** touch `.claude/settings.json` — remove
+the `cc-agent-messenger` allow-rules there yourself (the tool cannot self-modify
+permissions).
+
+## 11. Troubleshooting
 
 - **No iPhone push (badge appears, no banner):** Slack mobile **notification
   schedule** must include the current time; you must not be "active on desktop"

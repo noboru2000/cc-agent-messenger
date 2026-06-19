@@ -159,6 +159,67 @@ def cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
+_GITIGNORE_HEADER = "# cc-agent-messenger"
+_GITIGNORE_ENTRIES = frozenset({".cc-agent-messenger/", "tmp/", "*.sock"})
+
+
+def strip_gitignore_block(text: str) -> str:
+    """Remove the `# cc-agent-messenger` block that `init` appended (idempotent)."""
+
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip() == _GITIGNORE_HEADER:
+            if out and out[-1] == "":  # drop the blank line init prepended
+                out.pop()
+            i += 1
+            while i < len(lines) and lines[i].strip() in _GITIGNORE_ENTRIES:
+                i += 1
+            continue
+        out.append(lines[i])
+        i += 1
+    return "\n".join(out)
+
+
+def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Reverse `init`: remove the skill + gitignore block; `--purge` also deletes config/audit."""
+
+    project = os.path.abspath(args.dir)
+    removed: list[str] = []
+
+    skill_dir = os.path.join(project, ".claude", "skills", "cc-agent-messenger")
+    if os.path.isdir(skill_dir):
+        shutil.rmtree(skill_dir)
+        removed.append(skill_dir)
+
+    gitignore = os.path.join(project, ".gitignore")
+    if os.path.exists(gitignore):
+        text = open(gitignore, encoding="utf-8").read()
+        stripped = strip_gitignore_block(text)
+        if stripped != text:
+            with open(gitignore, "w", encoding="utf-8") as handle:
+                handle.write(stripped)
+            removed.append(f"{gitignore} (cc-agent-messenger block)")
+
+    local_dir = os.path.join(project, ".cc-agent-messenger")
+    if args.purge and os.path.isdir(local_dir):
+        shutil.rmtree(local_dir)
+        removed.append(f"{local_dir} (config/audit purged)")
+
+    print("cc-agent-messenger uninstall:")
+    for item in removed:
+        print(f"  removed {item}")
+    if not removed:
+        print("  nothing to remove (not initialized here?)")
+    if not args.purge and os.path.isdir(local_dir):
+        print(f"  kept    {local_dir} (config/audit) — use --purge to delete")
+    print("\nManual steps the tool cannot do for you:")
+    print("  - remove the cc-agent-messenger allow-rules from .claude/settings.json")
+    print("  - uninstall the CLI: uv tool uninstall cc-agent-messenger")
+    return 0
+
+
 # --------------------------------------------------------------------------- #
 # parser
 # --------------------------------------------------------------------------- #
@@ -170,6 +231,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_init = sub.add_parser("init", help="scaffold the host project (skill, config, allowlist)")
     p_init.add_argument("--dir", default=".", help="project directory (default: cwd)")
     p_init.set_defaults(func=cmd_init)
+
+    p_uninstall = sub.add_parser("uninstall", help="reverse init (remove skill + gitignore block; --purge also deletes config/audit)")
+    p_uninstall.add_argument("--dir", default=".", help="project directory (default: cwd)")
+    p_uninstall.add_argument("--purge", action="store_true", help="also delete .cc-agent-messenger/ (config, profile, audit)")
+    p_uninstall.set_defaults(func=cmd_uninstall)
 
     p_daemon = sub.add_parser("daemon", help="run the resident bot daemon")
     p_daemon.add_argument("--no-ingress", dest="ingress", action="store_false", default=True, help="serve the send API only")

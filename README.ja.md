@@ -63,7 +63,7 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## コマンド
 
-`cc-agent-messenger <init | daemon | send | ping | status | stop | kill on|off | doctor>`
+`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor>`
 — 詳細は `cc-agent-messenger --help`。Slack からは `/help`、`/status`、`/options`、
 `/continue`、`/doctor`、または `@bot <メッセージ>`。
 

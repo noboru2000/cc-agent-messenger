@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import tempfile
 import threading
 import unittest
@@ -8,6 +9,43 @@ from contextlib import redirect_stdout
 
 import _helpers
 from cc_agent_messenger import cli, sendapi
+
+
+class UninstallTests(unittest.TestCase):
+    def test_strip_gitignore_block(self) -> None:
+        gi = "node_modules/\n*.log\n\n# cc-agent-messenger\n.cc-agent-messenger/\ntmp/\n*.sock\n"
+        stripped = cli.strip_gitignore_block(gi)
+        self.assertNotIn("# cc-agent-messenger", stripped)
+        self.assertNotIn(".cc-agent-messenger/", stripped)
+        self.assertIn("node_modules/", stripped)
+        # idempotent: no block -> unchanged
+        self.assertEqual(cli.strip_gitignore_block("a\nb\n"), "a\nb\n")
+
+    def _scaffold(self) -> str:
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, ".claude", "skills", "cc-agent-messenger"))
+        open(os.path.join(d, ".claude", "skills", "cc-agent-messenger", "SKILL.md"), "w").close()
+        os.makedirs(os.path.join(d, ".cc-agent-messenger"))
+        open(os.path.join(d, ".cc-agent-messenger", "config.toml"), "w").close()
+        with open(os.path.join(d, ".gitignore"), "w", encoding="utf-8") as h:
+            h.write("keep/\n\n# cc-agent-messenger\n.cc-agent-messenger/\ntmp/\n*.sock\n")
+        return d
+
+    def test_uninstall_keeps_config(self) -> None:
+        d = self._scaffold()
+        with redirect_stdout(io.StringIO()):
+            cli.main(["uninstall", "--dir", d])
+        self.assertFalse(os.path.exists(os.path.join(d, ".claude", "skills", "cc-agent-messenger")))
+        self.assertTrue(os.path.isdir(os.path.join(d, ".cc-agent-messenger")))  # kept
+        gi = open(os.path.join(d, ".gitignore"), encoding="utf-8").read()
+        self.assertNotIn("# cc-agent-messenger", gi)
+        self.assertIn("keep/", gi)
+
+    def test_uninstall_purge_removes_config(self) -> None:
+        d = self._scaffold()
+        with redirect_stdout(io.StringIO()):
+            cli.main(["uninstall", "--dir", d, "--purge"])
+        self.assertFalse(os.path.isdir(os.path.join(d, ".cc-agent-messenger")))
 
 
 class BuildRequestTests(unittest.TestCase):
