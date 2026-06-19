@@ -5,7 +5,7 @@ changes small and reviewable, and add or update tests for every behavior change.
 
 ## Development setup
 
-    git clone https://github.com/REPLACE-OWNER/claude-messenger
+    git clone https://github.com/noboru2000/claude-messenger
     cd claude-messenger
     uv sync --extra dev
     uv run pytest

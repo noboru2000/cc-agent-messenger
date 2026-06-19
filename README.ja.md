@@ -40,7 +40,7 @@ iPhone Slack ──(@bot / /status)──► 常駐 bot (Bolt + Socket Mode)
 
     uv tool install claude-messenger
     # ソースから:
-    uv tool install git+https://github.com/<owner>/claude-messenger
+    uv tool install git+https://github.com/noboru2000/claude-messenger
 
 ## クイックスタート
 

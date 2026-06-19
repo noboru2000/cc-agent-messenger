@@ -26,7 +26,7 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
 
     uv tool install claude-messenger
     # or from source:
-    uv tool install git+https://github.com/<owner>/claude-messenger
+    uv tool install git+https://github.com/noboru2000/claude-messenger
 
 ## 2. Create the Slack app
 

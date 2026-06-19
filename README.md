@@ -43,7 +43,7 @@ iPhone Slack ──(@bot / /status)──► resident bot (Bolt + Socket Mode)
 
     uv tool install claude-messenger
     # or from source:
-    uv tool install git+https://github.com/REPLACE-OWNER/claude-messenger
+    uv tool install git+https://github.com/noboru2000/claude-messenger
 
 ## Quickstart
 
