@@ -114,6 +114,10 @@ wakes the live session; it composes a concise status and calls
 `cc-agent-messenger send`; the bot posts the reply mentioning you; your phone is
 pushed.
 
+For the full set of commands you can send (`/help`, `/status`, `/options`,
+`/select`, `/continue`, `/doctor`, …), their keywords, and the expected replies,
+see the **[command reference → docs/USAGE.md](USAGE.md)**.
+
 ## 8. Multiple agents (optional) & multiple projects
 
 - **One channel per agent.** Add `[[agent]]` entries to the config (a dedicated

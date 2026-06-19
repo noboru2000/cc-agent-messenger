@@ -69,7 +69,8 @@ to start watching the channel and replying. Add the printed allow-rule to
 
 `cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor>`
 — see `cc-agent-messenger --help`. From Slack: `/help`, `/status`, `/options`,
-`/continue`, `/doctor`, or just `@bot <message>`.
+`/continue`, `/doctor`, or just `@bot <message>` — full reference in
+[docs/USAGE.md](docs/USAGE.md).
 
 ## Limitations
 
@@ -82,6 +83,8 @@ to start watching the channel and replying. Add the printed allow-rule to
 
 - [docs/SETUP.md](docs/SETUP.md) — Slack app creation, invite, config, run, E2E,
   troubleshooting.
+- [docs/USAGE.md](docs/USAGE.md) — Slack command reference (`/help`, `/status`, …),
+  keywords, and expected behavior once it is running.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the C0 loop, the egress
   chokepoint, the four input surfaces, the security model.
 
