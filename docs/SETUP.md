@@ -64,10 +64,16 @@ Either way you get the global `cc-agent-messenger` command. Verify:
    `groups:history`, `groups:read`, `commands`, `reactions:read`.
    (Optional, for per-agent display names without separate apps: `chat:write.customize`.)
 3. **Socket Mode → Enable.** Generate an **App-Level Token** with scope
-   `connections:write` (this is the `xapp-…` token).
-4. **Slash Commands** (optional but typo-reducing): create `/status`, `/options`,
-   `/continue`, `/results`, `/report`, `/health`, `/doctor`. Any URL works under
-   Socket Mode.
+   `connections:write` (this is the `xapp-…` token). The **Token Name** is only a
+   label — anything works; e.g. `socket-mode`.
+4. **Slash Commands — optional; you can skip this step.** The bridge works fully
+   via **`@mention` free text** (the live session interprets your wording
+   flexibly), so no slash commands are required. Note that several useful names
+   (`/status`, `/help`, `/remind`, …) are **Slack reserved words** and cannot be
+   registered as custom commands. If you still want slash shortcuts, use
+   **non-reserved** names (e.g. `/cc-status`, `/cc-options`) and set the matching
+   keys in the `slash_map` of `.cc-agent-messenger/profile.json` (needs the
+   `commands` bot scope). Otherwise, leave slash commands out — `@mention` is enough.
 5. **Event Subscriptions → Enable.** Under "Subscribe to bot events" add
    `app_mention`, `message.groups`, `reaction_added`. **Save.** (Required even
    under Socket Mode — without it no events arrive.)
@@ -93,23 +99,57 @@ Edit `.cc-agent-messenger/config.toml`: fill `slack_bot_token`, `slack_app_token
 
 ## 5. Run the daemon & verify the return path
 
+Start the resident daemon. It is a **long-running process**: it stays in the
+foreground and the terminal "waits" — that is correct. `⚡️ Bolt app is running!`
+means it connected. Run it in its own terminal:
+
     cc-agent-messenger daemon
-    # in a second terminal (or after exporting the socket path):
+
+- **Stop it** with **Ctrl+C** in that terminal (or `cc-agent-messenger stop` from
+  elsewhere).
+- `cc-agent-messenger daemon &` would *background* it and free the terminal, but it
+  is then harder to find and stop. **Recommended: run it in the foreground (no
+  `&`)** in a dedicated terminal, so Ctrl+C stops it cleanly.
+
+Then open a **second terminal** (the daemon keeps running in the first) and verify
+the return path:
+
+    cd your-project
     cc-agent-messenger doctor                # config / token / channel / socket checks
     cc-agent-messenger ping                  # -> {"status":"alive"}
     cc-agent-messenger send --text "test"    # -> posts to your channel; phone gets a push
 
 ## 6. Run the live session (C0 monitor mode)
 
-In your VS Code Claude Code session, invoke the **`cc-agent-messenger`** skill. It
-arms `tail -n 0 -f <inbound_event_path>` and replies to each command via
-`cc-agent-messenger send`. To make replies hands-free, add the allow-rule printed by
-`init` to `.claude/settings.json` (the tool never self-grants it).
+This is the part that **replies** to your Slack commands.
+
+**Prerequisites (check these first):**
+
+- The daemon (§5) is running, and `cc-agent-messenger ping` returns
+  `{"status":"alive"}`.
+- In VS Code, open the **same project** where you ran `init` — so the skill exists
+  at `.claude/skills/cc-agent-messenger/SKILL.md`.
+- *(For hands-free replies)* add the allow-rule that `init` printed to
+  `.claude/settings.json`, then reload the window. Without it, each reply asks for
+  permission (you can choose "always allow" to persist it).
+
+**Invoke the skill** — in the Claude Code chat input, type:
+
+    /cc-agent-messenger
+
+- If `/` does **not** list it, the skill hasn't loaded yet: run
+  **Command+Shift+P → "Developer: Reload Window"**, then type `/cc-agent-messenger`
+  again.
+- Or just ask in plain language ("cc-agent-messenger のスキルで Slack を待ち受けて");
+  Claude invokes it by its description.
+
+Once invoked, the live session arms `tail -n 0 -f <inbound_event_path>` and replies
+to each Slack command via `cc-agent-messenger send`.
 
 ## 7. End-to-end test
 
-From the iPhone Slack app, in the private channel, send `/status` (or
-`@<bot-name> 最新の状況を教えて`). The daemon appends one JSONL line; the Monitor
+From the iPhone Slack app, in the private channel, send
+`@<bot-name> 最新の状況を教えて` (or a registered slash command). The daemon appends one JSONL line; the Monitor
 wakes the live session; it composes a concise status and calls
 `cc-agent-messenger send`; the bot posts the reply mentioning you; your phone is
 pushed.
