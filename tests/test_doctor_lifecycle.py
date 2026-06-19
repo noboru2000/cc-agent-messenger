@@ -22,6 +22,12 @@ class DoctorTests(unittest.TestCase):
         self.assertNotIn("slack auth", [name for name, _, _ in checks])
         self.assertIn("[PASS]", format_checks(checks) + "[PASS]")  # format runs
 
+    def test_ingress_dir_creatable_passes(self) -> None:
+        # tmp/ doesn't exist yet but its parent is writable -> daemon will create it.
+        cfg = _helpers.make_config(self.dir, inbound_event_path=os.path.join(self.dir, "tmp", ".slack_message"))
+        checks = dict((n, ok) for n, ok, _ in run_doctor(cfg))
+        self.assertTrue(checks["ingress dir writable"])
+
     def test_kill_switch_reflected(self) -> None:
         def ks_ok() -> bool:
             return dict((n, ok) for n, ok, _ in run_doctor(self.cfg))["kill switch"]

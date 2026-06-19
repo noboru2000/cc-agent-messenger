@@ -18,6 +18,18 @@ def _looks_like(token: str, prefix: str) -> bool:
     return token.startswith(prefix) and len(token) > len(prefix) + 4 and "REPLACE" not in token
 
 
+def _dir_ready(path: str) -> bool:
+    """True if ``path`` exists and is writable, or can be created (its nearest
+    existing ancestor is writable). The daemon creates such dirs on demand."""
+
+    d = path
+    while d not in ("", ".", "/") and not os.path.isdir(d):
+        d = os.path.dirname(d)
+    if d == "":
+        d = "."
+    return os.path.isdir(d) and os.access(d, os.W_OK)
+
+
 def run_doctor(cfg: Config, check_slack: bool = False) -> list[tuple[str, bool, str]]:
     """Run read-only diagnostics. ``check_slack`` adds network auth checks."""
 
@@ -30,11 +42,12 @@ def run_doctor(cfg: Config, check_slack: bool = False) -> list[tuple[str, bool, 
 
     sock = cfg.send_api_endpoint
     sock_dir = os.path.dirname(sock) or "."
-    checks.append(("socket dir writable", os.path.isdir(sock_dir) and os.access(sock_dir, os.W_OK), sock_dir))
+    checks.append(("socket dir writable", _dir_ready(sock_dir), sock_dir))
     checks.append(("socket present", os.path.exists(sock), sock if os.path.exists(sock) else "(daemon not running?)"))
 
     ingress_dir = os.path.dirname(cfg.inbound_event_path) or "."
-    checks.append(("ingress dir writable", os.path.isdir(ingress_dir) and os.access(ingress_dir, os.W_OK), ingress_dir))
+    ingress_detail = ingress_dir if os.path.isdir(ingress_dir) else f"{ingress_dir} (will be created on first message)"
+    checks.append(("ingress dir writable", _dir_ready(ingress_dir), ingress_detail))
 
     engaged = killswitch.is_engaged(cfg.kill_switch_path)
     checks.append(("kill switch", not engaged, "ENGAGED (halted)" if engaged else "clear"))
