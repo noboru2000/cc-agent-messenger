@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/logo.png" alt="claude-messenger logo" width="160">
+</p>
+
 # claude-messenger
 
 **English** | [日本語](README.ja.md)
