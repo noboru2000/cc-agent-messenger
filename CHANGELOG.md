@@ -7,6 +7,12 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- **Catch-up cursor** for robust ingress processing (OPERATIONS §2.1): new
+  `cc-agent-messenger pending` (prints inbound events not yet processed) and
+  `ack <correlation_id>` (advance the cursor). The skill drains the backlog with
+  these on every wake / poll, so a late reply is recovered even if a `tail -f` wake
+  was missed (App Nap). Cursor lives at `<inbound_event_path>.cursor` (no new config
+  key).
 - **`!pause`** (soft halt = `pause_hold`): stop the current task / autonomous loop
   and wait, **keeping the Slack channel open** so you can redirect; `!continue`
   resumes. `!stop` / 「止めて」 / 「一旦停止」 are aliases. (The hard freeze stays the
