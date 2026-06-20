@@ -44,9 +44,28 @@ commands (`!status`, `!select 2`, …) and keywords arrive **pre-resolved** into
 | `report_results` | report results if ready (read-only) |
 | `propose_options` | reply with a short numbered option list (or `--options` buttons) |
 | `select_option` | act on `args.index` from the options you last offered |
-| `continue` | resume the planned monitoring loop |
+| `pause_hold` | **stop the current task / autonomous loop and wait** — keep the channel open, reply "停止しました。次の指示をどうぞ", and keep listening (this is a *soft* halt; the kill switch is the hard one) |
+| `continue` | resume the planned monitoring loop (or resume after `pause_hold`) |
 | `system_doctor` | run `cc-agent-messenger doctor` and reply with a redacted summary |
 | `null` (free text) | interpret `text` → map to one command above; if ambiguous, ask `--options "1: A" "2: B"`. Never act outside the closed handler set; NN5-gate destructive actions. |
+
+## Staying responsive (reliability)
+
+The `tail -f` wake-up can be missed — macOS App Nap / Power Nap can suspend the idle
+`tail` after a quiet gap, which is the usual reason a **late reply isn't picked up**.
+So:
+
+- **Catch up on every wake, and poll.** On each wake — and at least **every few
+  minutes** even without one — re-read the ingress and process **all lines you have
+  not handled yet** (remember the last `correlation_id` you processed). Don't assume
+  the line that woke you is the only new one.
+- **Never end the listen loop while something is pending.** After offering options,
+  entering `pause_hold`, or away mode, keep the Monitor armed and keep waiting — a
+  reply that arrives much later must still be handled.
+- If the Mac slept / VS Code was closed, drain the **backlog on resume** (NN13: while
+  down, messages are recorded but not answered).
+- Ask the owner to keep the bridge awake (e.g. run under `caffeinate`, disable App
+  Nap) — see SETUP.md.
 
 ## Step 3 — reply
 

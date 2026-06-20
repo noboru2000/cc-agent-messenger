@@ -12,6 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
+def _both_surfaces() -> list[str]:
+    return ["slack", "local"]
+
+
 @dataclass(frozen=True)
 class Command:
     id: str
@@ -22,6 +26,10 @@ class Command:
     desc_en: str = ""
     takes_index: bool = False
     cls: str = "read-only"  # read-only | safe | nn5-gated
+    # Which control planes expose this command (OPERATIONS.md §7). All current
+    # commands are agent-control, reachable from Slack and the local agent window;
+    # lifecycle commands live in the CLI, not this registry.
+    surfaces: list[str] = field(default_factory=_both_surfaces)
 
 
 REGISTRY: list[Command] = [
@@ -32,6 +40,7 @@ REGISTRY: list[Command] = [
     Command("report_issues", ["/report", "/issues"], ["不具合"], ["issues"], "不具合があれば報告", "Report issues if any"),
     Command("propose_options", ["/options"], ["選択肢"], ["options"], "次の選択肢を提示", "Propose next-step options"),
     Command("select_option", ["/select"], ["選択", "番"], ["select"], "選択肢を選ぶ", "Pick an offered option", takes_index=True, cls="safe"),
+    Command("pause_hold", ["/pause"], ["一旦停止", "止めて", "停止"], ["pause", "hold", "stop"], "作業を一旦停止して待機(チャネルは維持)", "Pause work and wait (channel stays open)", cls="safe"),
     Command("continue", ["/continue", "/resume"], ["継続", "続行"], ["continue", "resume"], "監視ループ再開", "Resume the monitoring loop", cls="safe"),
     Command("system_doctor", ["/doctor"], ["診断"], ["doctor"], "システム診断", "System diagnostics"),
 ]

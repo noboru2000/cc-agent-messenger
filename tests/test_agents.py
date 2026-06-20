@@ -60,6 +60,18 @@ class CommandRegistryTests(unittest.TestCase):
     def test_help_text_honors_prefix(self) -> None:
         self.assertIn("$status", commands.help_text("en", prefix="$"))
 
+    def test_pause_hold_registered(self) -> None:
+        cmd = commands.by_id("pause_hold")
+        self.assertIsNotNone(cmd)
+        self.assertEqual(cmd.cls, "safe")
+        self.assertEqual(commands.bang_name(cmd), "pause")
+        self.assertIn("!pause", commands.help_text("en"))
+
+    def test_commands_have_surfaces(self) -> None:
+        # every command is reachable from Slack and the local agent window (OPS §7)
+        for cmd in commands.REGISTRY:
+            self.assertEqual(cmd.surfaces, ["slack", "local"], cmd.id)
+
 
 if __name__ == "__main__":
     unittest.main()

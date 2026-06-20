@@ -54,11 +54,17 @@ class MatchTests(unittest.TestCase):
             "!issues": "report_issues",
             "!results": "report_results",
             "!options": "propose_options",
+            "!pause": "pause_hold",
             "!continue": "continue",
             "!doctor": "system_doctor",
         }
         for text, expected in cases.items():
             self.assertEqual(match_command(text, self.profile).trigger, expected, text)
+
+    def test_pause_aliases_resolve(self) -> None:
+        # !stop and 「止めて」 both map to the soft pause (pause_hold)
+        self.assertEqual(match_command("!stop", self.profile).trigger, "pause_hold")
+        self.assertEqual(match_command("止めて", self.profile).trigger, "pause_hold")
 
     def test_bang_select_carries_index(self) -> None:
         match = match_command("!select 2", self.profile)

@@ -148,6 +148,17 @@ This is the part that **replies** to your Slack commands.
 Once invoked, the live session arms `tail -n 0 -f <inbound_event_path>` and replies
 to each Slack command via `cc-agent-messenger send`.
 
+**Keep the bridge awake (important for reliable replies).** macOS **App Nap /
+Power Nap** can suspend the idle `tail -f`, which is the usual reason a reply sent
+**after a quiet gap** is not picked up. While operating:
+
+- run the session under **`caffeinate`** (e.g. start VS Code from a terminal as
+  `caffeinate -dimsu code .`, or keep `caffeinate -dimsu` running), and keep the
+  Mac awake (lid open / no sleep);
+- **disable App Nap** for VS Code (and the terminal running the daemon):
+  System Settings → the app → *Prevent App Nap* if shown, or
+  `defaults write com.microsoft.VSCode NSAppSleepDisabled -bool YES` then restart it.
+
 ## 7. End-to-end test
 
 From the iPhone Slack app, in the private channel, send
@@ -241,6 +252,10 @@ permissions).
 
 ## 12. Troubleshooting
 
+- **A reply sent after a quiet gap isn't picked up (stuck "awaiting decision"):**
+  macOS **App Nap / Power Nap** suspended the idle `tail -f`. Keep the bridge awake
+  (`caffeinate`, disable App Nap, no sleep) — see §6 — and the live session catches
+  up the backlog on its next wake / poll.
 - **No iPhone push (badge appears, no banner):** Slack mobile **notification
   schedule** must include the current time; you must not be "active on desktop"
   (Slack holds mobile push while you are); the channel must not be muted; iOS
