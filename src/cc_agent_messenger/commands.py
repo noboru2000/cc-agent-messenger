@@ -42,6 +42,9 @@ REGISTRY: list[Command] = [
     Command("select_option", ["/select"], ["選択", "番"], ["select"], "選択肢を選ぶ", "Pick an offered option", takes_index=True, cls="safe"),
     Command("pause_hold", ["/pause"], ["一旦停止", "止めて", "停止"], ["pause", "hold", "stop"], "作業を一旦停止して待機(チャネルは維持)", "Pause work and wait (channel stays open)", cls="safe"),
     Command("continue", ["/continue", "/resume"], ["継続", "続行"], ["continue", "resume"], "監視ループ再開", "Resume the monitoring loop", cls="safe"),
+    Command("away", ["/away"], ["離席"], ["away"], "離席モード(最低報告間隔ごとに生存+進捗、判断はSlackで確認)", "Away mode: min-report heartbeat; ask via Slack for decisions", cls="safe"),
+    Command("back", ["/back"], ["戻った", "復帰"], ["back"], "離席モード解除", "Exit away mode", cls="safe"),
+    Command("keepalive", ["/keepalive"], ["生存確認"], ["keepalive"], "生存ハートビートの切替(MR:Nm / off)", "Toggle the keep-alive heartbeat (MR:Nm / off)", cls="safe"),
     Command("system_doctor", ["/doctor"], ["診断"], ["doctor"], "システム診断", "System diagnostics"),
 ]
 

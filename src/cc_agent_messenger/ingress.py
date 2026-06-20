@@ -132,7 +132,26 @@ def _ingest(
     )
     _append_event(ev, ctx.cfg.inbound_event_path)
     _audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=trigger, outcome="appended", summary=text, correlation_id=ev.correlation_id)
+    _note_heartbeat(ctx, channel_id, trigger, text)
     return ev
+
+
+def _note_heartbeat(ctx: AppContext, channel_id: str, trigger: str | None, text: str) -> None:
+    """Inbound counts as channel activity (restarts the keep-alive timer); mode
+    commands update the daemon's timer state (OPERATIONS §2.5). No-op without a
+    scheduler (e.g. in unit tests)."""
+
+    hb = getattr(ctx, "heartbeat", None)
+    if hb is None:
+        return
+    import time
+
+    from . import heartbeat as _hb
+
+    now = time.time()
+    hb.note_activity(channel_id, now)
+    if trigger in _hb.MODE_TRIGGERS:
+        hb.apply_mode(channel_id, trigger, text, now)
 
 
 def handle_mention(channel_id: str, user_id: str, raw_text: str, ts: str, thread_ts: str, ctx: AppContext) -> InboundEvent | None:

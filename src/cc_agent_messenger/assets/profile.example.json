@@ -13,6 +13,9 @@
     { "trigger": "select_option", "patterns": ["番", "選択", "select"], "takes_index": true },
     { "trigger": "pause_hold", "patterns": ["一旦停止", "止めて", "停止", "pause", "hold", "stop"] },
     { "trigger": "continue", "patterns": ["処理を継続", "継続", "続行", "continue"] },
+    { "trigger": "away", "patterns": ["離席"] },
+    { "trigger": "back", "patterns": ["戻った", "復帰"] },
+    { "trigger": "keepalive", "patterns": ["生存確認"] },
     { "trigger": "system_doctor", "patterns": ["診断", "doctor"] }
   ],
   "slash_map": {},

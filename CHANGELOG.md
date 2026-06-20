@@ -7,6 +7,14 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- **Idle-heartbeat keep-alive + away mode** (OPERATIONS §2.5 / §4): the daemon runs
+  a **reset-on-activity** timer — any bot post / owner message restarts it, so a
+  keep-alive fires only after the channel has been *silent* for the interval (a
+  recent reply postpones the next; no redundant pings). New commands
+  `!away MR:Nm ["what to report"]`, `!back`, `!keepalive MR:Nm | off` (with JA
+  aliases); the daemon injects a `keep_alive` event the live session answers. The
+  interval keyword is `MR:Nm` = *minimum report interval*. (`heartbeat.py`,
+  daemon thread, in/out activity hooks; suppressed while the kill switch is engaged.)
 - **Catch-up cursor** for robust ingress processing (OPERATIONS §2.1): new
   `cc-agent-messenger pending` (prints inbound events not yet processed) and
   `ack <correlation_id>` (advance the cursor). The skill drains the backlog with
