@@ -76,6 +76,29 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
     # ソースから:
     uv tool install git+https://github.com/noboru2000/cc-agent-messenger
 
+## 更新とアンインストール
+
+導入済みバージョンの確認と、PyPI 最新版への更新:
+
+    cc-agent-messenger --version                 # 導入済みバージョン
+    uv tool upgrade cc-agent-messenger           # -> 更新、または "Nothing to upgrade"
+
+`Nothing to upgrade` は**すでに最新**の意味です。最新版は上部の PyPI バッジ、
+<https://pypi.org/project/cc-agent-messenger/>、または
+`uv pip index versions cc-agent-messenger` で確認できます(pipx:
+`pipx upgrade cc-agent-messenger`、pip: `pip install -U cc-agent-messenger`)。
+
+更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を新バージョンへ
+更新し、daemon を再起動します。`init` は**現在の bot 設定を引き継ぎます** —
+トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
+(何を更新し何を保持したか表示します)。[docs/SETUP.md](docs/SETUP.md) §10 参照。
+
+アンインストール:
+
+    cc-agent-messenger uninstall            # プロジェクトの skill + .gitignore ブロック削除(config は保持)
+    cc-agent-messenger uninstall --purge    # .cc-agent-messenger/(config/profile/audit)も削除
+    uv tool uninstall cc-agent-messenger    # グローバル CLI を削除
+
 ## クイックスタート
 
     cd your-project

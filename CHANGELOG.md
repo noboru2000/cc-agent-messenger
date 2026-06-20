@@ -6,6 +6,14 @@ semantic versioning.
 
 ## [Unreleased]
 
+### Changed
+- README (en/ja): add an **Update & uninstall** section — check the installed
+  version (`--version`) and the latest on PyPI, upgrade (`uv tool upgrade`, with
+  pipx/pip alternatives), and uninstall. Clarify that re-running `init` after an
+  upgrade is **required** (refreshes the skill) and **preserves** your bot settings.
+- SETUP §10: add how to see the latest PyPI version + the meaning of
+  `Nothing to upgrade`; mark the post-upgrade `init` as required.
+
 ## [0.2.0] - 2026-06-20
 
 Operational reliability features from real use (OPERATIONS.md): the bridge now

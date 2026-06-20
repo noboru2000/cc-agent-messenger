@@ -208,9 +208,18 @@ upgrade.
 
        cc-agent-messenger --version
 
-2. **Refresh the project scaffold** — re-run `init` in the same project. It
-   **refreshes the skill** to the new version and **preserves** your `config.toml`
-   and `profile.json` (it prints what it refreshed vs kept):
+   `Nothing to upgrade` means you already have the latest PyPI release. To see the
+   latest available version: the PyPI badge in the README,
+   <https://pypi.org/project/cc-agent-messenger/>, or:
+
+       uv pip index versions cc-agent-messenger     # versions available on PyPI
+
+   (pipx: `pipx upgrade cc-agent-messenger`; pip: `pip install -U cc-agent-messenger`.)
+
+2. **Refresh the project scaffold (required)** — re-run `init` in the same project
+   to pick up the new version's skill. It **refreshes the skill** and **preserves**
+   your `config.toml` (tokens/owner/channel) and `profile.json` (it prints what it
+   refreshed vs kept):
 
        cd your-project
        cc-agent-messenger init
