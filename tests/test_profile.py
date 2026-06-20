@@ -56,10 +56,18 @@ class MatchTests(unittest.TestCase):
             "!options": "propose_options",
             "!pause": "pause_hold",
             "!continue": "continue",
+            "!away": "away",
+            "!back": "back",
+            "!keepalive": "keepalive",
             "!doctor": "system_doctor",
         }
         for text, expected in cases.items():
             self.assertEqual(match_command(text, self.profile).trigger, expected, text)
+
+    def test_mode_commands_with_args_resolve(self) -> None:
+        # the trailing MR:/off args are parsed by the daemon, not the matcher
+        self.assertEqual(match_command("!away MR:10m", self.profile).trigger, "away")
+        self.assertEqual(match_command("!keepalive off", self.profile).trigger, "keepalive")
 
     def test_pause_aliases_resolve(self) -> None:
         # !stop and 「止めて」 both map to the soft pause (pause_hold)

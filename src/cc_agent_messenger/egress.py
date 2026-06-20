@@ -93,6 +93,11 @@ def handle_send(req: SendRequest, ctx: AppContext) -> SendResult:
         return SendResult(STATUS_FAILED, message_ts=posted, reason=f"slack_error: {exc}")
 
     _audit(ctx, op="send", outcome=STATUS_POSTED, correlation_id=req.correlation_id, summary=req.text)
+    hb = getattr(ctx, "heartbeat", None)
+    if hb is not None:  # a bot post restarts the channel's keep-alive timer (§2.5)
+        import time
+
+        hb.note_activity(channel_id, time.time())
     return SendResult(STATUS_POSTED, message_ts=posted)
 
 

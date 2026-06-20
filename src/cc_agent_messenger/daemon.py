@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import threading
 
-from . import ingress, multiagent, sendapi
+from . import heartbeat, ingress, killswitch, multiagent, sendapi
 from .audit import purge_expired
 from .config import DEFAULT_CONFIG_PATH, Config
 from .context import AppContext
@@ -26,7 +26,34 @@ def build_context(cfg: Config, config_path: str | None = None) -> AppContext:
         agents = multiagent.load_agents(config_path or DEFAULT_CONFIG_PATH)
     except (FileNotFoundError, OSError, KeyError, ValueError):
         agents = []
-    return AppContext(cfg=cfg, profile=load_profile(cfg.profile_path), slack=SlackEgress(cfg), agents=agents)
+    return AppContext(
+        cfg=cfg,
+        profile=load_profile(cfg.profile_path),
+        slack=SlackEgress(cfg),
+        agents=agents,
+        heartbeat=heartbeat.HeartbeatScheduler(),
+    )
+
+
+def _run_heartbeat(ctx: AppContext) -> None:
+    """Inject idle-heartbeat keep-alive ticks into the ingress (§2.5).
+
+    Runs in a daemon thread: every poll, append a ``keep_alive`` event for each
+    channel that has been silent for its interval. Suppressed while the kill
+    switch is engaged.
+    """
+
+    import time
+
+    while True:
+        time.sleep(heartbeat.POLL_SECONDS)
+        try:
+            if killswitch.is_engaged(ctx.cfg.kill_switch_path):
+                continue
+            for event in ctx.heartbeat.due_events(time.time(), owner_user_id=ctx.cfg.owner_slack_user_id):
+                ingress.append_line(ctx.cfg.inbound_event_path, ingress.event_to_line(event))
+        except Exception:  # pragma: no cover - keep the daemon alive on transient errors
+            continue
 
 
 def build_app(ctx: AppContext):  # returns a slack_bolt.App
@@ -155,6 +182,7 @@ def run(cfg: Config, ingress_enabled: bool = True, config_path: str | None = Non
 
         thread = threading.Thread(target=sendapi.serve, args=(ctx,), daemon=True)
         thread.start()
+        threading.Thread(target=_run_heartbeat, args=(ctx,), daemon=True).start()
         print(f"cc-agent-messenger send API at {cfg.send_api_endpoint}; starting Slack ingress (Socket Mode)")
 
         from slack_bolt.adapter.socket_mode import SocketModeHandler

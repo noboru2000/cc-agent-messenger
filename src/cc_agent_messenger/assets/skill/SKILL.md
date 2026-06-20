@@ -48,6 +48,10 @@ commands (`!status`, `!select 2`, …) and keywords arrive **pre-resolved** into
 | `select_option` | act on `args.index` from the options you last offered |
 | `pause_hold` | **stop the current task / autonomous loop and wait** — keep the channel open, reply "停止しました。次の指示をどうぞ", and keep listening (this is a *soft* halt; the kill switch is the hard one) |
 | `continue` | resume the planned monitoring loop (or resume after `pause_hold`) |
+| `away` | acknowledge **away mode**: e.g. "離席モード: 最低 *N* 分おきに報告、判断は Slack で確認して待機". The **daemon** runs the min-report timer (`MR:Nm` from the text); you keep working autonomously, **ask via Slack and wait** for any decision / NN5-gated action, and **never end the listen loop**. |
+| `back` | acknowledge "通常モードに戻りました" and resume normal interactive behavior |
+| `keepalive` | acknowledge the heartbeat toggle (`MR:Nm` on, or `off`) |
+| `keep_alive` (timer tick) | the daemon fired the idle heartbeat — reply **briefly** "alive + progress" (use `text` as the requested content if set) and continue. If `args.away` is true you are in away mode. Keep it short; don't repeat unchanged status verbatim. |
 | `system_doctor` | run `cc-agent-messenger doctor` and reply with a redacted summary |
 | `null` (free text) | interpret `text` → map to one command above; if ambiguous, ask `--options "1: A" "2: B"`. Never act outside the closed handler set; NN5-gate destructive actions. |
 
