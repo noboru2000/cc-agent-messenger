@@ -87,6 +87,14 @@ class ApplyWatchTests(unittest.TestCase):
         monitors.apply_watch(self.sched, "!watch gpu on", now=10)
         self.assertTrue(self.sched.jobs["gpu"].enabled)
 
+    def test_global_off_stops_all(self) -> None:
+        sched = monitors.MonitorScheduler(
+            [monitors.MonitorJob(id="gpu", interval_s=300), monitors.MonitorJob(id="disk", interval_s=600)]
+        )
+        out = monitors.apply_watch(sched, "!watch off", now=0)
+        self.assertIn("all monitors", out.lower())
+        self.assertFalse(any(j.enabled for j in sched.jobs.values()))
+
     def test_define_new_job(self) -> None:
         out = monitors.apply_watch(self.sched, '!watch disk every:10m "disk free on gpu01"', now=0)
         self.assertIn("disk", out)

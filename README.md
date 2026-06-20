@@ -99,12 +99,25 @@ to start watching the channel and replying. Add the printed allow-rule to
 
 ## Commands
 
-`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor>`
-— see `cc-agent-messenger --help`. From Slack, `@bot` the bot with either an
-explicit command — `!status`, `!options`, `!select 2`, `!continue`, `!doctor`,
-`!help` (a leading `!` is deterministic and needs no Slack slash registration) —
-or plain words (`状況は?`, `status`). Full reference in
-[docs/USAGE.md](docs/USAGE.md).
+**CLI:** `cc-agent-messenger <init | uninstall | daemon | send | ping | status |
+stop | kill on|off | doctor | pending | ack | monitors>` — see
+`cc-agent-messenger --help`.
+
+**From Slack** (`@bot` + a leading `!`, deterministic, no Slack slash registration —
+or plain words / buttons / emoji):
+
+- **Ask/act:** `!status`, `!results`, `!issues`, `!options`, `!select 2`,
+  `!continue`, `!doctor`, `!help`.
+- **Pause/redirect:** `!pause` (soft halt — channel stays open; `!continue`
+  resumes). The hard freeze is the CLI-only kill switch.
+- **Away & keep-alive:** `!away MR:10m ["what to report"]` / `!back`;
+  `!keepalive MR:10m | off`. `MR:` = minimum report interval (you hear at least
+  every *N*; a real reply postpones the next).
+- **Scheduled monitors:** `!watch <id> every:5m ["items"]` (e.g. SSH a GPU box for
+  util/mem/temp + loss, with threshold alerts) / `!watch <id> off` / `!watch off`
+  (stop all) / `!watch list`. `every:` = fixed cadence.
+
+Full reference in [docs/USAGE.md](docs/USAGE.md).
 
 ## Limitations
 

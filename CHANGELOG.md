@@ -6,6 +6,13 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-20
+
+Operational reliability features from real use (OPERATIONS.md): the bridge now
+catches up on late replies, stays responsive (App Nap guidance), and adds soft
+pause, away mode + idle-heartbeat keep-alive, receipt reactions, and scheduled
+monitors with alerts.
+
 ### Added
 - **Scheduled monitors + threshold alerts** (OPERATIONS §6): fixed-interval
   (`every:Nm`, *not* reset-on-activity) jobs that probe something read-only and
@@ -14,7 +21,7 @@ semantic versioning.
   interprets — e.g. SSH a GPU box for util/mem/temp + the latest loss), reports with
   interpretation, and raises an immediate ⚠️ alert when a rule trips. Jobs are
   defined in `config.toml` (`[[monitor]]`) and toggled at runtime with
-  `!watch <id> on|off|every:Nm ["items"]` / `!watch list`; `cc-agent-messenger
+  `!watch <id> on|off|every:Nm ["items"]` / `!watch off` (stop all) / `!watch list`; `cc-agent-messenger
   monitors` lists them. Probes are read-only (remote mutations stay NN5-gated).
   (`monitors.py`, daemon monitor thread, `watch` command + ingress hook.)
 - **Receipt reactions 👀 → ✅** (OPERATIONS §2.4): the daemon adds 👀 to a received
@@ -93,6 +100,7 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/noboru2000/cc-agent-messenger/releases/tag/v0.1.0
