@@ -143,7 +143,12 @@ def apply_watch(scheduler: MonitorScheduler, text: str, now: float) -> str:
     """
 
     body = _WATCH_PREFIX.sub("", text or "", count=1).strip()
-    if not body or body.lower() == "list":
+    low = body.lower()
+    if low in ("off", "stop", "off all", "stop all", "all off"):
+        for job in scheduler.jobs.values():
+            job.enabled = False
+        return "all monitors: OFF"
+    if not body or low == "list":
         return scheduler.summary()
 
     parts = body.split(maxsplit=1)

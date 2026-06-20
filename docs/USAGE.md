@@ -56,7 +56,8 @@ all reach `explain_status`.
   autonomously and send at least one update every *N* minutes (a real reply
   postpones the next); ask via Slack for any decision. `MR:` = *minimum report
   interval*. `!keepalive MR:10m | off` toggles the heartbeat without away mode.
-- **`!watch <id> every:5m ["items"]`** / **`!watch <id> off`** / **`!watch list`** —
+- **`!watch <id> every:5m ["items"]`** / **`!watch <id> off`** (stop one) /
+  **`!watch off`** (stop all) / **`!watch list`** —
   scheduled monitors: a **fixed-interval** report. The agent gathers the content
   (a read-only `probe` and/or natural-language `items` it interprets — e.g. SSH a
   GPU box for util/mem/temp and the latest loss) and reports, with **threshold
