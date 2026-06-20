@@ -78,3 +78,56 @@ class SlackEgress:
             return bool(self._client.auth_test().get("ok"))
         except Exception:  # pragma: no cover - network dependent
             return False
+
+    # --- Capability probes (used by `doctor --slack`; see doctor.py) ----------
+    # These let the diagnostics verify what the *installed* bot can actually do,
+    # without ever handing the token back to the caller.
+
+    def auth_scopes(self) -> tuple[dict[str, str], list[str]]:
+        """Return ``(identity, granted_bot_scopes)`` for capability diagnostics.
+
+        ``identity`` carries only non-secret fields (bot user, team, url). The
+        granted scopes come from the ``x-oauth-scopes`` response header — the one
+        place Slack reports what the installed token actually holds (so a missing
+        ``reactions:write`` shows up here). Raises on auth/network failure.
+        """
+
+        resp = self._client.auth_test()
+        data = resp.data if isinstance(resp.data, dict) else {}
+        identity = {
+            "user_id": str(data.get("user_id", "")),
+            "user": str(data.get("user", "")),
+            "team": str(data.get("team", "")),
+            "url": str(data.get("url", "")),
+        }
+        raw = ""
+        for key, value in (resp.headers or {}).items():
+            if key.lower() == "x-oauth-scopes":
+                raw = value or ""
+                break
+        scopes = [s.strip() for s in raw.split(",") if s.strip()]
+        return identity, scopes
+
+    def channel_membership(self, channel_id: str) -> tuple[bool, str]:
+        """Return ``(bot_is_member, "#name")`` for the channel. Raises on API error
+        (e.g. ``channel_not_found`` / missing ``groups:read``)."""
+
+        resp = self._client.conversations_info(channel=channel_id)
+        ch = resp.data.get("channel", {}) if isinstance(resp.data, dict) else {}
+        name = ch.get("name") or channel_id
+        return bool(ch.get("is_member")), f"#{name}"
+
+    def socket_mode_reachable(self) -> tuple[bool, str]:
+        """Verify the app-level token + Socket Mode via ``apps.connections.open``.
+
+        Uses the ``xapp-`` app-level token (held in cfg, never returned). Mints a
+        WSS endpoint but does not connect — read-only and non-disruptive to a
+        running daemon. Raises on API error (e.g. Socket Mode disabled, bad token).
+        """
+
+        from slack_sdk import WebClient
+
+        client = WebClient(token=self._cfg.slack_app_token)
+        resp = client.apps_connections_open()
+        ok = bool(resp.data.get("ok")) if isinstance(resp.data, dict) else False
+        return ok, "Socket Mode connection mint ok"

@@ -55,7 +55,8 @@ all reach `explain_status`.
 - **`!away MR:10m ["what to report"]`** / **`!back`** — away mode: work
   autonomously and send at least one update every *N* minutes (a real reply
   postpones the next); ask via Slack for any decision. `MR:` = *minimum report
-  interval*. `!keepalive MR:10m | off` toggles the heartbeat without away mode.
+  interval* (defaults to `10m` when omitted). `!keepalive MR:10m | off` toggles
+  the heartbeat without away mode.
 - **`!watch <id> every:5m ["items"]`** / **`!watch <id> off`** (stop one) /
   **`!watch off`** (stop all) / **`!watch list`** —
   scheduled monitors: a **fixed-interval** report. The agent gathers the content
@@ -70,7 +71,8 @@ all reach `explain_status`.
 
 - **Receipt reactions 👀 → ✅.** The bot adds 👀 to your command the moment it is
   received, and swaps it to ✅ when the reply is sent — instant feedback even if the
-  agent is busy. (Needs the `reactions:write` scope.)
+  agent is busy. (Needs the `reactions:write` scope — verify with
+  `cc-agent-messenger doctor --slack`, or `--live` to actively exercise 👀→✅.)
 - **Complete message turns, concise.** Replies come back as whole messages (not
   live-typed), kept short; long replies are split into coherent chunks. The bot
   `@`-mentions you, so your phone gets a push.

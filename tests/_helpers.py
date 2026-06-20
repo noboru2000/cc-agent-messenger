@@ -24,12 +24,29 @@ _SOCK_COUNTER = itertools.count()
 class FakeSlack:
     """Duck-typed stand-in for SlackEgress (no network, no slack_sdk)."""
 
-    def __init__(self, ts_seq: list[str] | None = None, raise_exc: Exception | None = None, live: bool = True) -> None:
+    def __init__(
+        self,
+        ts_seq: list[str] | None = None,
+        raise_exc: Exception | None = None,
+        live: bool = True,
+        scopes: list[str] | None = None,
+        identity: dict[str, str] | None = None,
+        is_member: bool = True,
+        socket_ok: bool = True,
+    ) -> None:
         self.calls: list[dict[str, object]] = []
         self.reactions: list[tuple[str, str, str, str]] = []
         self._ts = iter(ts_seq or [f"{i}.{i}" for i in range(1, 20)])
         self._raise = raise_exc
         self._live = live
+        # Capability-probe defaults: a healthy, fully-scoped bot.
+        self._scopes = list(scopes) if scopes is not None else [
+            "chat:write", "app_mentions:read", "groups:history",
+            "groups:read", "reactions:read", "reactions:write", "commands",
+        ]
+        self._identity = identity or {"user": "testbot", "user_id": "U_BOT", "team": "T_TEST", "url": "https://example.test"}
+        self._is_member = is_member
+        self._socket_ok = socket_ok
 
     def post(self, channel_id: str, text: str, thread_ts: str | None, options: list[str] | None = None) -> str:
         self.calls.append({"channel_id": channel_id, "text": text, "thread_ts": thread_ts, "options": options})
@@ -45,6 +62,15 @@ class FakeSlack:
 
     def is_socket_mode_live(self) -> bool:
         return self._live
+
+    def auth_scopes(self) -> tuple[dict[str, str], list[str]]:
+        return dict(self._identity), list(self._scopes)
+
+    def channel_membership(self, channel_id: str) -> tuple[bool, str]:
+        return self._is_member, "#test"
+
+    def socket_mode_reachable(self) -> tuple[bool, str]:
+        return self._socket_ok, "Socket Mode connection mint ok"
 
 
 def make_config(tmpdir: str, **overrides: object) -> Config:
