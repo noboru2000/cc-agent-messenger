@@ -49,6 +49,9 @@ all reach `explain_status`.
 
 ## What to expect
 
+- **Receipt reactions 👀 → ✅.** The bot adds 👀 to your command the moment it is
+  received, and swaps it to ✅ when the reply is sent — instant feedback even if the
+  agent is busy. (Needs the `reactions:write` scope.)
 - **Complete message turns, concise.** Replies come back as whole messages (not
   live-typed), kept short; long replies are split into coherent chunks. The bot
   `@`-mentions you, so your phone gets a push.

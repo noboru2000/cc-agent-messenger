@@ -61,8 +61,9 @@ Either way you get the global `cc-agent-messenger` command. Verify:
 1. api.slack.com/apps → **Create New App** → From scratch. Name it `<bot-name>`,
    pick your workspace.
 2. **OAuth & Permissions → Bot Token Scopes:** `chat:write`, `app_mentions:read`,
-   `groups:history`, `groups:read`, `commands`, `reactions:read`.
-   (Optional, for per-agent display names without separate apps: `chat:write.customize`.)
+   `groups:history`, `groups:read`, `commands`, `reactions:read`, `reactions:write`.
+   (`reactions:write` lets the bot add the 👀→✅ receipt reaction; optional, for
+   per-agent display names without separate apps: `chat:write.customize`.)
 3. **Socket Mode → Enable.** Generate an **App-Level Token** with scope
    `connections:write` (this is the `xapp-…` token). The **Token Name** is only a
    label — anything works; e.g. `socket-mode`.

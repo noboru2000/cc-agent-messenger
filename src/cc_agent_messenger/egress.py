@@ -98,6 +98,10 @@ def handle_send(req: SendRequest, ctx: AppContext) -> SendResult:
         import time
 
         hb.note_activity(channel_id, time.time())
+    if req.correlation_id:  # swap the receipt reaction 👀 -> ✅ (§2.4)
+        from . import receipts
+
+        receipts.on_reply(ctx, req.correlation_id)
     return SendResult(STATUS_POSTED, message_ts=posted)
 
 

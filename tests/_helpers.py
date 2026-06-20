@@ -26,6 +26,7 @@ class FakeSlack:
 
     def __init__(self, ts_seq: list[str] | None = None, raise_exc: Exception | None = None, live: bool = True) -> None:
         self.calls: list[dict[str, object]] = []
+        self.reactions: list[tuple[str, str, str, str]] = []
         self._ts = iter(ts_seq or [f"{i}.{i}" for i in range(1, 20)])
         self._raise = raise_exc
         self._live = live
@@ -35,6 +36,12 @@ class FakeSlack:
         if self._raise is not None:
             raise self._raise
         return next(self._ts)
+
+    def add_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
+        self.reactions.append(("add", channel_id, timestamp, name))
+
+    def remove_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
+        self.reactions.append(("remove", channel_id, timestamp, name))
 
     def is_socket_mode_live(self) -> bool:
         return self._live
