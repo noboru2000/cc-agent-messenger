@@ -7,6 +7,16 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- **Scheduled monitors + threshold alerts** (OPERATIONS §6): fixed-interval
+  (`every:Nm`, *not* reset-on-activity) jobs that probe something read-only and
+  report. The daemon injects a `monitor_tick` every interval; the live session
+  gathers the content (an explicit `probe` and/or natural-language `items` it
+  interprets — e.g. SSH a GPU box for util/mem/temp + the latest loss), reports with
+  interpretation, and raises an immediate ⚠️ alert when a rule trips. Jobs are
+  defined in `config.toml` (`[[monitor]]`) and toggled at runtime with
+  `!watch <id> on|off|every:Nm ["items"]` / `!watch list`; `cc-agent-messenger
+  monitors` lists them. Probes are read-only (remote mutations stay NN5-gated).
+  (`monitors.py`, daemon monitor thread, `watch` command + ingress hook.)
 - **Receipt reactions 👀 → ✅** (OPERATIONS §2.4): the daemon adds 👀 to a received
   command and swaps it to ✅ when the reply is posted — instant feedback decoupled
   from the agent's reply latency. Best-effort (a reaction failure never breaks the

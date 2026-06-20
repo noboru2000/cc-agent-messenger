@@ -16,6 +16,7 @@
     { "trigger": "away", "patterns": ["離席"] },
     { "trigger": "back", "patterns": ["戻った", "復帰"] },
     { "trigger": "keepalive", "patterns": ["生存確認"] },
+    { "trigger": "watch", "patterns": ["監視"] },
     { "trigger": "system_doctor", "patterns": ["診断", "doctor"] }
   ],
   "slash_map": {},

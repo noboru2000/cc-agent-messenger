@@ -52,6 +52,25 @@ class CursorTests(unittest.TestCase):
         cfg = _helpers.make_config(tempfile.mkdtemp())  # no ingress written
         self.assertEqual(cursor.pending_events(cfg), [])
 
+    def test_timer_ticks_coalesced_non_timer_kept(self) -> None:
+        # a backlog of stale timer ticks should collapse to the latest per kind,
+        # while non-timer (real) events all survive in order
+        cfg = _helpers.make_config(tempfile.mkdtemp())
+        rows = [
+            {"correlation_id": "1", "source": "mention", "trigger": "explain_status"},
+            {"correlation_id": "2", "source": "timer", "trigger": "keep_alive", "channel_id": "C1", "args": {}},
+            {"correlation_id": "3", "source": "timer", "trigger": "monitor_tick", "channel_id": "C1", "args": {"job_id": "gpu"}},
+            {"correlation_id": "4", "source": "timer", "trigger": "keep_alive", "channel_id": "C1", "args": {}},
+            {"correlation_id": "5", "source": "timer", "trigger": "monitor_tick", "channel_id": "C1", "args": {"job_id": "gpu"}},
+            {"correlation_id": "6", "source": "mention", "trigger": "explain_status"},
+        ]
+        with open(cfg.inbound_event_path, "w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row) + "\n")
+        got = [e["correlation_id"] for e in cursor.pending_events(cfg)]
+        # keep_alive -> only "4"; monitor_tick gpu -> only "5"; both mentions kept
+        self.assertEqual(got, ["1", "4", "5", "6"])
+
 
 if __name__ == "__main__":
     unittest.main()

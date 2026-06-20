@@ -22,3 +22,4 @@ class AppContext:
     agents: list = field(default_factory=list)  # list[AgentConfig]; empty = single-agent
     heartbeat: object | None = None  # HeartbeatScheduler in the daemon; None elsewhere
     receipts: object | None = None  # ReceiptTracker (👀→✅) in the daemon; None elsewhere
+    monitors: object | None = None  # MonitorScheduler in the daemon; None elsewhere

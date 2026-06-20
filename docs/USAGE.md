@@ -47,6 +47,24 @@ anything destructive / irreversible asks for your explicit approval first (NN5).
 You don't have to use exact wording: "状況を教えて", "今どうなってる?", and "status"
 all reach `explain_status`.
 
+## Modes & scheduled monitors
+
+- **`!pause`** — soft halt: stop the current task and wait, **keeping the channel
+  open** (`!continue` or a new instruction resumes). The hard freeze is the
+  CLI-only kill switch.
+- **`!away MR:10m ["what to report"]`** / **`!back`** — away mode: work
+  autonomously and send at least one update every *N* minutes (a real reply
+  postpones the next); ask via Slack for any decision. `MR:` = *minimum report
+  interval*. `!keepalive MR:10m | off` toggles the heartbeat without away mode.
+- **`!watch <id> every:5m ["items"]`** / **`!watch <id> off`** / **`!watch list`** —
+  scheduled monitors: a **fixed-interval** report. The agent gathers the content
+  (a read-only `probe` and/or natural-language `items` it interprets — e.g. SSH a
+  GPU box for util/mem/temp and the latest loss) and reports, with **threshold
+  alerts** (e.g. temp > 85, loss diverging) sent immediately. Define jobs in
+  `config.toml` (`[[monitor]]`) or inline. `every:` = *exactly* every *N* (not
+  reset-on-activity, unlike `MR:`). Probes are read-only; remote changes stay
+  NN5-gated.
+
 ## What to expect
 
 - **Receipt reactions 👀 → ✅.** The bot adds 👀 to your command the moment it is

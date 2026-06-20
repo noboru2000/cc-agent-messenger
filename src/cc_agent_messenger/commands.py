@@ -45,6 +45,7 @@ REGISTRY: list[Command] = [
     Command("away", ["/away"], ["離席"], ["away"], "離席モード(最低報告間隔ごとに生存+進捗、判断はSlackで確認)", "Away mode: min-report heartbeat; ask via Slack for decisions", cls="safe"),
     Command("back", ["/back"], ["戻った", "復帰"], ["back"], "離席モード解除", "Exit away mode", cls="safe"),
     Command("keepalive", ["/keepalive"], ["生存確認"], ["keepalive"], "生存ハートビートの切替(MR:Nm / off)", "Toggle the keep-alive heartbeat (MR:Nm / off)", cls="safe"),
+    Command("watch", ["/watch"], ["監視"], ["watch"], "定期監視の設定(list / <id> every:Nm \"内容\" / <id> off)", "Scheduled monitors (list / <id> every:Nm \"items\" / <id> off)", cls="safe"),
     Command("system_doctor", ["/doctor"], ["診断"], ["doctor"], "システム診断", "System diagnostics"),
 ]
 
