@@ -26,6 +26,12 @@ def build_context(cfg: Config, config_path: str | None = None) -> AppContext:
         agents = multiagent.load_agents(config_path or DEFAULT_CONFIG_PATH)
     except (FileNotFoundError, OSError, KeyError, ValueError):
         agents = []
+    import time
+
+    monitor_sched = monitors.MonitorScheduler(monitors.load_monitors(config_path or DEFAULT_CONFIG_PATH))
+    start = time.time()
+    for job in monitor_sched.jobs.values():
+        job.last_tick = start  # first tick one full interval after startup, not immediately
     return AppContext(
         cfg=cfg,
         profile=load_profile(cfg.profile_path),
@@ -33,16 +39,20 @@ def build_context(cfg: Config, config_path: str | None = None) -> AppContext:
         agents=agents,
         heartbeat=heartbeat.HeartbeatScheduler(),
         receipts=receipts.ReceiptTracker(),
-        monitors=monitors.MonitorScheduler(monitors.load_monitors(config_path or DEFAULT_CONFIG_PATH)),
+        monitors=monitor_sched,
     )
 
 
 def _run_heartbeat(ctx: AppContext) -> None:
-    """Inject idle-heartbeat keep-alive ticks into the ingress (§2.5).
+    """Inject idle-heartbeat keep-alive + monitor ticks into the ingress (§2.5/§6).
 
     Runs in a daemon thread: every poll, append a ``keep_alive`` event for each
-    channel that has been silent for its interval. Suppressed while the kill
-    switch is engaged.
+    channel that has been silent for its interval, plus a ``monitor_tick`` for each
+    due monitor job. Suppressed while the kill switch is engaged.
+
+    Limitation: ticks are written to the **default** ``inbound_event_path`` with the
+    ``allowed_slack_channel_id``. Per-agent ingress routing (multi-agent) is not yet
+    wired — keep-alive/monitors are effectively single-channel for now.
     """
 
     import time
@@ -57,7 +67,10 @@ def _run_heartbeat(ctx: AppContext) -> None:
             if ctx.monitors is not None:
                 events += ctx.monitors.due_events(now, channel_id=ctx.cfg.allowed_slack_channel_id, owner_user_id=ctx.cfg.owner_slack_user_id)
             for event in events:
-                ingress.append_line(ctx.cfg.inbound_event_path, ingress.event_to_line(event))
+                try:  # one bad append must not skip the rest of the batch
+                    ingress.append_line(ctx.cfg.inbound_event_path, ingress.event_to_line(event))
+                except Exception:  # pragma: no cover
+                    continue
         except Exception:  # pragma: no cover - keep the daemon alive on transient errors
             continue
 

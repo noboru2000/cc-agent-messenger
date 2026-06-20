@@ -154,7 +154,8 @@ def cmd_ack(args: argparse.Namespace) -> int:
 
 
 def cmd_monitors(args: argparse.Namespace) -> int:
-    """List the configured scheduled monitors (OPERATIONS §6); for `!watch list`."""
+    """List the scheduled monitors defined in config (OPERATIONS §6); for `!watch
+    list`. Shows the configured `[[monitor]]` jobs, not the daemon's runtime toggles."""
 
     from . import monitors
 
@@ -363,7 +364,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ack.add_argument("correlation_id")
     p_ack.set_defaults(func=cmd_ack)
 
-    p_monitors = sub.add_parser("monitors", help="list the configured scheduled monitors")
+    p_monitors = sub.add_parser("monitors", help="list the scheduled monitors defined in config ([[monitor]])")
     p_monitors.set_defaults(func=cmd_monitors)
 
     return parser

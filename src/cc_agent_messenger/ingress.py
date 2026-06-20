@@ -148,7 +148,11 @@ def _note_monitors(ctx: AppContext, trigger: str | None, text: str) -> None:
 
     from . import monitors as _mon
 
-    _mon.apply_watch(mon, text, time.time())
+    # Only the structured `!watch …` grammar is auto-applied. Free-text intent
+    # (e.g. the 「監視」 keyword) is left for the live session to guide into a
+    # structured command, so the ack never diverges from the scheduler state.
+    if _mon.is_structured(text):
+        _mon.apply_watch(mon, text, time.time())
 
 
 def _note_heartbeat(ctx: AppContext, channel_id: str, trigger: str | None, text: str) -> None:

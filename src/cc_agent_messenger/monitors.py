@@ -51,10 +51,13 @@ def load_monitors(path: str) -> list[MonitorJob]:
         return []
     jobs: list[MonitorJob] = []
     for item in data.get("monitor", []):
+        raw_id = item.get("id")
+        if not raw_id:
+            continue  # skip malformed entries (missing id) instead of crashing the daemon
         interval = heartbeat.parse_interval(str(item.get("every", ""))) or DEFAULT_INTERVAL
         jobs.append(
             MonitorJob(
-                id=str(item["id"]),
+                id=str(raw_id),
                 interval_s=interval,
                 items=str(item.get("items", "")),
                 probe=str(item.get("probe", "")),
@@ -124,11 +127,19 @@ class MonitorScheduler:
         return events
 
 
+def is_structured(text: str) -> bool:
+    """True for the explicit ``!watch …`` / ``/watch …`` / ``watch …`` grammar
+    (vs a free-text keyword like 「監視」 that only signals intent)."""
+
+    return bool(_WATCH_PREFIX.match(text or ""))
+
+
 def apply_watch(scheduler: MonitorScheduler, text: str, now: float) -> str:
-    """Apply a ``!watch`` command to the scheduler; return a human ack string.
+    """Apply a structured ``!watch`` command to the scheduler; return an ack string.
 
     Forms: ``!watch list`` / ``!watch <id> off`` / ``!watch <id> on`` /
-    ``!watch <id> [every:Nm] ["items"]``.
+    ``!watch <id> [every:Nm] ["items"]``. Free-text (no ``watch`` keyword) is not
+    applied here — the live session guides the owner to the structured form.
     """
 
     body = _WATCH_PREFIX.sub("", text or "", count=1).strip()
@@ -139,20 +150,24 @@ def apply_watch(scheduler: MonitorScheduler, text: str, now: float) -> str:
     job_id = parts[0]
     rest = parts[1].strip() if len(parts) > 1 else ""
 
-    if _OFF.search(rest):
+    # Separate the quoted items from the control tokens so a word like "off"
+    # inside the items can't toggle the monitor.
+    quoted = _QUOTED.search(rest)
+    items = quoted.group(1).strip() if quoted else None
+    control = _QUOTED.sub("", rest).strip()
+    tokens = control.lower().split()
+    interval = heartbeat.parse_interval(control)
+
+    if "off" in tokens:
         ok = scheduler.set_enabled(job_id, False)
         return f"watch {job_id}: OFF" if ok else f"watch: unknown monitor '{job_id}'"
 
-    if rest == "" or rest.lower() == "on":
-        if job_id in scheduler.jobs:
-            scheduler.set_enabled(job_id, True)
+    if interval is None and items is None and tokens in ([], ["on"]):
+        if scheduler.set_enabled(job_id, True):
             scheduler.jobs[job_id].last_tick = now
             return f"watch {job_id}: ON"
         return f"watch: unknown monitor '{job_id}' — give an interval/items to create it"
 
-    interval = heartbeat.parse_interval(rest)
-    quoted = _QUOTED.search(rest)
-    items = quoted.group(1).strip() if quoted else None
     job = scheduler.define(job_id, interval_s=interval, items=items, now=now)
     mins = int(job.interval_s // 60) or 1
     return f"watch {job_id}: ON, every {mins}m"

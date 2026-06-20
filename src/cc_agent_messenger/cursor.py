@@ -60,8 +60,30 @@ def _read_events(path: str) -> list[dict]:
     return events
 
 
+def _coalesce_timer(events: list[dict]) -> list[dict]:
+    """Collapse superseded **timer** ticks (``source == "timer"``): after downtime
+    a backlog of identical ``keep_alive`` / ``monitor_tick`` events would otherwise
+    replay in bulk. Keep only the **latest** per (trigger, job_id, channel); all
+    non-timer events pass through unchanged, in order."""
+
+    def key(ev: dict) -> tuple:
+        args = ev.get("args") or {}
+        return (ev.get("trigger"), args.get("job_id"), ev.get("channel_id"))
+
+    last: dict[tuple, int] = {}
+    for index, ev in enumerate(events):
+        if ev.get("source") == "timer":
+            last[key(ev)] = index
+    out: list[dict] = []
+    for index, ev in enumerate(events):
+        if ev.get("source") == "timer" and last[key(ev)] != index:
+            continue  # superseded by a later tick of the same kind
+        out.append(ev)
+    return out
+
+
 def pending_events(cfg: Config) -> list[dict]:
-    """Events appended **after** the cursor.
+    """Events appended **after** the cursor (superseded timer ticks coalesced).
 
     Returns all events when the cursor is unset, or when the recorded
     ``correlation_id`` is no longer in the file (the ingress was rotated/recreated)
@@ -71,9 +93,9 @@ def pending_events(cfg: Config) -> list[dict]:
 
     events = _read_events(cfg.inbound_event_path)
     cursor = read_cursor(cfg)
-    if not cursor:
-        return events
-    for index, event in enumerate(events):
-        if event.get("correlation_id") == cursor:
-            return events[index + 1 :]
-    return events
+    if cursor:
+        for index, event in enumerate(events):
+            if event.get("correlation_id") == cursor:
+                events = events[index + 1 :]
+                break
+    return _coalesce_timer(events)
