@@ -7,8 +7,24 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- **`!pause`** (soft halt = `pause_hold`): stop the current task / autonomous loop
+  and wait, **keeping the Slack channel open** so you can redirect; `!continue`
+  resumes. `!stop` / 「止めて」 / 「一旦停止」 are aliases. (The hard freeze stays the
+  CLI kill switch — see SECURITY / OPERATIONS.) The skill's `pause_hold` handler and
+  a `!help` entry come with it.
+- Per-command **`surfaces`** attribute (`[slack, local]`) on the registry — the same
+  command vocabulary is reachable from Slack *and* the local agent window;
+  lifecycle stays CLI-only.
 - README (en/ja): a **Demo** section showing a typical phone-side Slack exchange,
   with a commented slot for a screen-recording GIF.
+
+### Changed
+- SKILL.md: stronger operating rules — **catch up on every wake + poll** and **never
+  end the listen loop while a decision / pause / away is pending** (so a late reply
+  is still handled).
+- SETUP.md: **keep-awake** guidance (`caffeinate`, disable App Nap) — the usual fix
+  for a reply sent after a quiet gap not being picked up; plus a troubleshooting
+  entry.
 
 ### Fixed
 - README.ja flow diagram showed the old `/status`; now `!status`.
