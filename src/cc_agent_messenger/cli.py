@@ -123,7 +123,9 @@ def cmd_kill(args: argparse.Namespace) -> int:
 
 def cmd_doctor(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
-    checks = run_doctor(cfg, check_slack=args.slack)
+    # --live implies --slack (it needs the Slack probe object) and adds the active
+    # 👀→✅ receipt round-trip (which posts a probe message to the channel).
+    checks = run_doctor(cfg, check_slack=args.slack or args.live, live=args.live)
     print(format_checks(checks))
     return 0 if all(ok for _, ok, _ in checks) else 1
 
@@ -353,7 +355,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_kill.set_defaults(func=cmd_kill)
 
     p_doctor = sub.add_parser("doctor", help="diagnostics")
-    p_doctor.add_argument("--slack", action="store_true", help="also check Slack auth (network)")
+    p_doctor.add_argument("--slack", action="store_true", help="also probe the live bot: auth, granted scopes, channel membership & Socket Mode (network)")
+    p_doctor.add_argument("--live", action="store_true", help="active 👀→✅ receipt self-test: posts a probe message to the channel and reacts (implies --slack; has a side effect)")
     p_doctor.set_defaults(func=cmd_doctor)
 
     p_pending = sub.add_parser("pending", help="print inbound events not yet processed (catch-up cursor)")

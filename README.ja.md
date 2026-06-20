@@ -116,10 +116,12 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## コマンド
 
-`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor>`
-— 詳細は `cc-agent-messenger --help`。Slack からは `/help`、`/status`、`/options`、
-`/continue`、`/doctor`、または `@bot <メッセージ>` — 全コマンドは
-[docs/USAGE.md](docs/USAGE.md) を参照。
+`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor | pending | ack | monitors>`
+— 詳細は `cc-agent-messenger --help`。`doctor --slack` は**稼働中の bot** を診断
+(認証・付与スコープ〔`reactions:write` 漏れも検出〕・チャネル参加・Socket Mode)、
+`--live` を付けると 👀→✅ レシートを実走テスト(チャネルにプローブを投稿)。
+Slack からは `/help`、`/status`、`/options`、`/continue`、`/doctor`、または
+`@bot <メッセージ>` — 全コマンドは [docs/USAGE.md](docs/USAGE.md) を参照。
 
 ## 制限
 

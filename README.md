@@ -125,7 +125,9 @@ to start watching the channel and replying. Add the printed allow-rule to
 
 **CLI:** `cc-agent-messenger <init | uninstall | daemon | send | ping | status |
 stop | kill on|off | doctor | pending | ack | monitors>` — see
-`cc-agent-messenger --help`.
+`cc-agent-messenger --help`. `doctor --slack` probes the **live bot** (auth, granted
+scopes — flags a missing `reactions:write` — channel membership, Socket Mode);
+add `--live` for an active 👀→✅ receipt self-test (posts a probe to the channel).
 
 **From Slack** (`@bot` + a leading `!`, deterministic, no Slack slash registration —
 or plain words / buttons / emoji):
@@ -136,7 +138,7 @@ or plain words / buttons / emoji):
   resumes). The hard freeze is the CLI-only kill switch.
 - **Away & keep-alive:** `!away MR:10m ["what to report"]` / `!back`;
   `!keepalive MR:10m | off`. `MR:` = minimum report interval (you hear at least
-  every *N*; a real reply postpones the next).
+  every *N*; a real reply postpones the next), default `10m` when omitted.
 - **Scheduled monitors:** `!watch <id> every:5m ["items"]` (e.g. SSH a GPU box for
   util/mem/temp + loss, with threshold alerts) / `!watch <id> off` / `!watch off`
   (stop all) / `!watch list`. `every:` = fixed cadence.

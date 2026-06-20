@@ -6,13 +6,41 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-20
+
+Diagnostics + onboarding. `doctor` now verifies the *installed* bot's real
+capabilities, and the setup guide walks the full install → run → test round trip
+more clearly.
+
+### Added
+- **`doctor --slack` now probes bot capabilities** (not just auth): granted
+  bot-token scopes (from the `x-oauth-scopes` header — surfaces a missing
+  `reactions:write` so the 👀→✅ receipts gap is visible), allowed-channel
+  membership (`conversations.info`), and app-level token + Socket Mode reachability
+  (`apps.connections.open`). One self-diagnosing command, no new subcommand.
+  (`doctor.py`, `slackclient.py` capability probes.) The Interactivity &
+  Event-Subscription **toggles** can't be read back via bot/app tokens and remain a
+  manual SETUP check.
+- **`doctor --slack --live`**: an opt-in active 👀→✅ **receipt self-test** — posts a
+  throwaway probe to the allowed channel and runs the exact receipt sequence
+  (add 👀 → remove 👀 → add ✅), proving `reactions:write` works *live*. Mutating,
+  so gated behind `--live` and refused while the kill switch is engaged; implies
+  `--slack`.
+
 ### Changed
+- **SETUP.md restructured** for clearer onboarding: an explicit "open the project in
+  VS Code" step, the terminal/window role for each step, verifying with
+  `doctor --slack --live` at configure time, and two-direction end-to-end examples.
+  Adds the previously-missing **Interactivity & Shortcuts → Enable** step (required
+  for option buttons; without it clicks render but are never delivered) + related
+  troubleshooting.
+- Docs: `!away` / `!keepalive` `MR:Nm` defaults to **`10m`** when omitted
+  (OPERATIONS §4, USAGE en/ja, README); README/USAGE document `doctor --slack` /
+  `--live`.
 - README (en/ja): add an **Update & uninstall** section — check the installed
   version (`--version`) and the latest on PyPI, upgrade (`uv tool upgrade`, with
-  pipx/pip alternatives), and uninstall. Clarify that re-running `init` after an
-  upgrade is **required** (refreshes the skill) and **preserves** your bot settings.
-- SETUP §10: add how to see the latest PyPI version + the meaning of
-  `Nothing to upgrade`; mark the post-upgrade `init` as required.
+  pipx/pip alternatives), and uninstall. Re-running `init` after an upgrade is
+  **required** (refreshes the skill) and **preserves** your bot settings.
 
 ## [0.2.0] - 2026-06-20
 
@@ -108,7 +136,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/noboru2000/cc-agent-messenger/releases/tag/v0.1.0
