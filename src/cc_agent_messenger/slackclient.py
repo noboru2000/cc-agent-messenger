@@ -61,6 +61,16 @@ class SlackEgress:
         response = self._client.chat_postMessage(**kwargs)
         return str(response["ts"])
 
+    def add_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
+        """Add an emoji reaction to a message (needs the ``reactions:write`` scope)."""
+
+        self._client.reactions_add(channel=channel_id, timestamp=timestamp, name=name)
+
+    def remove_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
+        """Remove an emoji reaction the bot previously added."""
+
+        self._client.reactions_remove(channel=channel_id, timestamp=timestamp, name=name)
+
     def is_socket_mode_live(self) -> bool:
         """Best-effort liveness: the bot token authenticates against Slack."""
 

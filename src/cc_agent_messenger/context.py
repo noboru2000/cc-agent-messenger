@@ -21,3 +21,4 @@ class AppContext:
     slack: object  # SlackEgress (duck-typed so tests can inject a fake)
     agents: list = field(default_factory=list)  # list[AgentConfig]; empty = single-agent
     heartbeat: object | None = None  # HeartbeatScheduler in the daemon; None elsewhere
+    receipts: object | None = None  # ReceiptTracker (👀→✅) in the daemon; None elsewhere

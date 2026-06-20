@@ -7,6 +7,10 @@ semantic versioning.
 ## [Unreleased]
 
 ### Added
+- **Receipt reactions 👀 → ✅** (OPERATIONS §2.4): the daemon adds 👀 to a received
+  command and swaps it to ✅ when the reply is posted — instant feedback decoupled
+  from the agent's reply latency. Best-effort (a reaction failure never breaks the
+  in/out path). Needs the new **`reactions:write`** bot scope (added to SETUP §2.2).
 - **Idle-heartbeat keep-alive + away mode** (OPERATIONS §2.5 / §4): the daemon runs
   a **reset-on-activity** timer — any bot post / owner message restarts it, so a
   keep-alive fires only after the channel has been *silent* for the interval (a
