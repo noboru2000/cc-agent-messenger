@@ -59,6 +59,7 @@ class MatchTests(unittest.TestCase):
             "!away": "away",
             "!back": "back",
             "!keepalive": "keepalive",
+            "!watch": "watch",
             "!doctor": "system_doctor",
         }
         for text, expected in cases.items():

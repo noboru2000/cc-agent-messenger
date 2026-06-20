@@ -133,7 +133,22 @@ def _ingest(
     _append_event(ev, ctx.cfg.inbound_event_path)
     _audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=trigger, outcome="appended", summary=text, correlation_id=ev.correlation_id)
     _note_heartbeat(ctx, channel_id, trigger, text)
+    _note_monitors(ctx, trigger, text)
     return ev
+
+
+def _note_monitors(ctx: AppContext, trigger: str | None, text: str) -> None:
+    """Apply a ``!watch`` command to the daemon's monitor scheduler (OPERATIONS §6).
+    The live session acks the watch event itself. No-op without a scheduler."""
+
+    mon = getattr(ctx, "monitors", None)
+    if mon is None or trigger != "watch":
+        return
+    import time
+
+    from . import monitors as _mon
+
+    _mon.apply_watch(mon, text, time.time())
 
 
 def _note_heartbeat(ctx: AppContext, channel_id: str, trigger: str | None, text: str) -> None:

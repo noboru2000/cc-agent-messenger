@@ -25,3 +25,20 @@ default_agent = "claude"
 interpretation_mode = "flexible"             # "flexible" | "strict"
 max_chunk_chars = 3900
 audit_retention_days = 30
+
+# --- Scheduled monitors (optional; OPERATIONS.md §6) ---
+# Fixed-interval reports. The daemon ticks every `every`; the live session gathers
+# the content (the read-only `probe` and/or the natural-language `items` it
+# interprets), reports concisely, and alerts if a rule trips. Toggle at runtime
+# with `!watch <id> on|off` / `!watch <id> every:Nm`. Probes MUST be read-only;
+# remote mutations stay NN5-gated. Keep SSH keys/aliases on this host, and add the
+# probe to .claude/settings.json for hands-free reports.
+#
+# [[monitor]]
+# id = "gpu"
+# every = "5m"
+# items = "GPU utilization, memory used, temperature, and the latest training loss"
+# probe = "ssh gpu01 'nvidia-smi --query-gpu=utilization.gpu,memory.used,temperature.gpu --format=csv,noheader'"
+# report = "concise"
+# alert = ["temperature.gpu > 85", "loss is NaN or diverging", "training process not running"]
+# enabled = true

@@ -3,7 +3,7 @@
 """Unified CLI — `cc-agent-messenger <subcommand>`.
 
 Subcommands: init / uninstall / daemon / send / ping / status / stop / kill /
-doctor / pending / ack.
+doctor / pending / ack / monitors.
 See ``docs/PACKAGE_DESIGN.md`` §5–§6. The send/ping/status paths talk to the
 daemon over its Unix socket and never touch the Slack token.
 """
@@ -150,6 +150,16 @@ def cmd_ack(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     cursor.write_cursor(cfg, args.correlation_id)
     print(f"cursor -> {args.correlation_id}")
+    return 0
+
+
+def cmd_monitors(args: argparse.Namespace) -> int:
+    """List the configured scheduled monitors (OPERATIONS §6); for `!watch list`."""
+
+    from . import monitors
+
+    jobs = monitors.MonitorScheduler(monitors.load_monitors(args.config or DEFAULT_CONFIG_PATH))
+    print(jobs.summary())
     return 0
 
 
@@ -352,6 +362,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_ack = sub.add_parser("ack", help="advance the cursor to a processed event's correlation id")
     p_ack.add_argument("correlation_id")
     p_ack.set_defaults(func=cmd_ack)
+
+    p_monitors = sub.add_parser("monitors", help="list the configured scheduled monitors")
+    p_monitors.set_defaults(func=cmd_monitors)
 
     return parser
 

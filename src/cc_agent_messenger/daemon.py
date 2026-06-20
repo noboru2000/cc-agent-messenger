@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import threading
 
-from . import heartbeat, ingress, killswitch, multiagent, receipts, sendapi
+from . import heartbeat, ingress, killswitch, monitors, multiagent, receipts, sendapi
 from .audit import purge_expired
 from .config import DEFAULT_CONFIG_PATH, Config
 from .context import AppContext
@@ -33,6 +33,7 @@ def build_context(cfg: Config, config_path: str | None = None) -> AppContext:
         agents=agents,
         heartbeat=heartbeat.HeartbeatScheduler(),
         receipts=receipts.ReceiptTracker(),
+        monitors=monitors.MonitorScheduler(monitors.load_monitors(config_path or DEFAULT_CONFIG_PATH)),
     )
 
 
@@ -51,7 +52,11 @@ def _run_heartbeat(ctx: AppContext) -> None:
         try:
             if killswitch.is_engaged(ctx.cfg.kill_switch_path):
                 continue
-            for event in ctx.heartbeat.due_events(time.time(), owner_user_id=ctx.cfg.owner_slack_user_id):
+            now = time.time()
+            events = ctx.heartbeat.due_events(now, owner_user_id=ctx.cfg.owner_slack_user_id)
+            if ctx.monitors is not None:
+                events += ctx.monitors.due_events(now, channel_id=ctx.cfg.allowed_slack_channel_id, owner_user_id=ctx.cfg.owner_slack_user_id)
+            for event in events:
                 ingress.append_line(ctx.cfg.inbound_event_path, ingress.event_to_line(event))
         except Exception:  # pragma: no cover - keep the daemon alive on transient errors
             continue
