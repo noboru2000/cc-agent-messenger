@@ -2,7 +2,8 @@
 # Copyright (c) 2026 Noboru Harada
 """Unified CLI — `cc-agent-messenger <subcommand>`.
 
-Subcommands: init / daemon / send / ping / status / stop / kill / doctor.
+Subcommands: init / uninstall / daemon / send / ping / status / stop / kill /
+doctor / pending / ack.
 See ``docs/PACKAGE_DESIGN.md`` §5–§6. The send/ping/status paths talk to the
 daemon over its Unix socket and never touch the Slack token.
 """
@@ -125,6 +126,31 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     checks = run_doctor(cfg, check_slack=args.slack)
     print(format_checks(checks))
     return 0 if all(ok for _, ok, _ in checks) else 1
+
+
+def cmd_pending(args: argparse.Namespace) -> int:
+    """Print inbound events not yet processed (cursor catch-up, OPERATIONS §2.1)."""
+
+    from . import cursor
+
+    cfg = load_config(args.config)
+    events = cursor.pending_events(cfg)
+    for event in events:
+        print(json.dumps(event, ensure_ascii=False))
+    if args.ack and events:
+        cursor.write_cursor(cfg, str(events[-1].get("correlation_id", "")))
+    return 0
+
+
+def cmd_ack(args: argparse.Namespace) -> int:
+    """Advance the cursor to a processed event's correlation id."""
+
+    from . import cursor
+
+    cfg = load_config(args.config)
+    cursor.write_cursor(cfg, args.correlation_id)
+    print(f"cursor -> {args.correlation_id}")
+    return 0
 
 
 def cmd_init(args: argparse.Namespace) -> int:
@@ -318,6 +344,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor = sub.add_parser("doctor", help="diagnostics")
     p_doctor.add_argument("--slack", action="store_true", help="also check Slack auth (network)")
     p_doctor.set_defaults(func=cmd_doctor)
+
+    p_pending = sub.add_parser("pending", help="print inbound events not yet processed (catch-up cursor)")
+    p_pending.add_argument("--ack", action="store_true", help="also advance the cursor past the printed events")
+    p_pending.set_defaults(func=cmd_pending)
+
+    p_ack = sub.add_parser("ack", help="advance the cursor to a processed event's correlation id")
+    p_ack.add_argument("correlation_id")
+    p_ack.set_defaults(func=cmd_ack)
 
     return parser
 

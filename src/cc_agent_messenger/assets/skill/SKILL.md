@@ -25,7 +25,9 @@ Start a **persistent** Monitor on the ingress file (plain `tail`, no pipe):
 
     tail -n 0 -f <inbound_event_path>
 
-`-n 0` fires only on lines appended after arming (no replay; no catch-up while down).
+`-n 0` fires only on lines appended after arming. The Monitor is the **low-latency**
+wake; for correctness use the **catch-up cursor** below (a missed/late wake is then
+harmless).
 
 ## Step 2 — handle each event
 
@@ -56,9 +58,16 @@ The `tail -f` wake-up can be missed — macOS App Nap / Power Nap can suspend th
 So:
 
 - **Catch up on every wake, and poll.** On each wake — and at least **every few
-  minutes** even without one — re-read the ingress and process **all lines you have
-  not handled yet** (remember the last `correlation_id` you processed). Don't assume
-  the line that woke you is the only new one.
+  minutes** even without one — drain the backlog with the cursor instead of trusting
+  the single triggering line:
+
+      cc-agent-messenger pending          # JSONL of events not yet processed
+      # …handle each event, then mark them done:
+      cc-agent-messenger ack <correlation_id-of-the-last-one-you-handled>
+
+  `pending` returns every event after the cursor (all of them the first time), so a
+  missed `tail -f` wake is recovered on the next poll. Ack only after you have
+  actually handled an event.
 - **Never end the listen loop while something is pending.** After offering options,
   entering `pause_hold`, or away mode, keep the Monitor armed and keep waiting — a
   reply that arrives much later must still be handled.
