@@ -8,7 +8,7 @@ events**, not just the one that woke it. This makes a late reply robust to a
 missed ``tail -f`` interrupt (e.g. macOS App Nap suspending the idle tail).
 
 The cursor file sits next to the ingress (``<inbound_event_path>.cursor``), so it
-needs no new config key and is gitignored along with ``tmp/``.
+needs no new config key and is gitignored along with ``.cc-agent-messenger/``.
 """
 
 from __future__ import annotations

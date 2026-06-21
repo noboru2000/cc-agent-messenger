@@ -6,6 +6,28 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-22
+
+### Changed
+- **`init`'s `.gitignore` block is now `.cc-agent-messenger/` +
+  `.claude/skills/cc-agent-messenger/`** (was `.cc-agent-messenger/` + `tmp/` +
+  `*.sock`). The inbound event file moved from `tmp/.slack_message` to
+  `.cc-agent-messenger/tmp/.slack_message`, so the bot no longer claims the generic
+  top-level `tmp/`; `*.sock` is dropped as redundant (`send.sock` already lives under
+  `.cc-agent-messenger/`). The skill is ignored **surgically**
+  (`.claude/skills/cc-agent-messenger/`), not all of `.claude/`, so your own Claude
+  Code assets stay committable. `init` now writes a single block and, on upgrade,
+  **keeps** any existing `tmp/` + `*.sock` lines (a preserved `config.toml` may still
+  use a top-level `tmp/`); `uninstall` strips both layouts. (`cli.py`,
+  `config.example.toml`, `cursor.py`)
+- **New project logo** — transparent, higher-resolution (`docs/images/logo.png`).
+
+### Upgrading
+- Existing installs keep working — `init` preserves your `config.toml`. To adopt the
+  new location, set `inbound_event_path = ".cc-agent-messenger/tmp/.slack_message"`
+  in `.cc-agent-messenger/config.toml`, remove the now-unneeded `tmp/` line from
+  `.gitignore`, and restart the daemon.
+
 ## [0.4.0] - 2026-06-21
 
 ### Added
@@ -147,7 +169,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...v0.2.0

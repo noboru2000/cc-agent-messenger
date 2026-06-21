@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
+  <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/logo.png" alt="cc-agent-messenger logo" width="240">
 </p>
 
 # cc-agent-messenger
@@ -27,7 +27,7 @@ as **complete message turns**, not live terminal mirroring.
 iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
                                        │ authorize (NN4) + match command
                                        ▼
-                               tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
+           .cc-agent-messenger/tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
           iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
 ```
 
@@ -120,6 +120,23 @@ Uninstall:
 Then, in your VS Code Claude Code session, invoke the **`cc-agent-messenger`** skill
 to start watching the channel and replying. Add the printed allow-rule to
 `.claude/settings.json` to make replies hands-free.
+
+### What `init` adds to `.gitignore`
+
+`init` writes a `# cc-agent-messenger` block with exactly these two entries —
+generated runtime + secrets that must never be committed:
+
+| Entry | Why |
+| --- | --- |
+| `.cc-agent-messenger/` | everything the bot generates: `config.toml` (Slack tokens), `profile.json`, audit log, `KILL_SWITCH`, the `send.sock` socket, and `tmp/.slack_message` (the inbound event the Monitor tails) |
+| `.claude/skills/cc-agent-messenger/` | the skill `init` copies from the installed package — regenerated on every `init`, so it isn't committed |
+
+Only the cc-agent-messenger **skill folder** is ignored under `.claude/`, not
+`.claude/` itself — your own Claude Code assets (`settings.json`, your skills and
+commands) stay committable. If a project has nothing else under `.claude/`, it
+simply won't appear in the repo. (Upgrading from a version that also ignored
+`tmp/` + `*.sock`? Re-running `init` keeps those lines — your existing
+`config.toml` may still write inbound events there — and just adds the skill entry.)
 
 ## Commands
 

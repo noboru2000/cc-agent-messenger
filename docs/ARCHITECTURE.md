@@ -10,7 +10,7 @@ Python daemon/CLI, and a Claude Code skill the live session runs.
 Slack channel ──► resident bot (Bolt + Socket Mode)
                     │ ingress: authorize (NN4) + match command + tag `trigger`
                     ▼
-              tmp/.slack_message  (append-only JSONL, one event per line)
+              .cc-agent-messenger/tmp/.slack_message  (append-only JSONL, one event per line)
                     │
                     ▼  tail -f Monitor in the live VS Code Claude Code session
               live session wakes, interprets, composes a reply

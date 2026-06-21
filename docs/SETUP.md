@@ -9,7 +9,7 @@ local-only in `.cc-agent-messenger/config.toml` (gitignored; never commit — NN
 iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
                                        │ authorize (NN4) + match command
                                        ▼
-                               tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
+           .cc-agent-messenger/tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
           iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
 ```
 
