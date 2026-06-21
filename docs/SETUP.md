@@ -251,6 +251,13 @@ permission prompt). To let it edit the repo, widen per agent (use a private repo
 C1 turns respect the kill switch and are audited like the live path, and they run off
 the ingest thread so a long turn never blocks new messages.
 
+**GitHub Copilot** works the same way (`kind = "copilot"`, `cli = "copilot"`): install
+`npm i -g @github/copilot`, authenticate via `COPILOT_GITHUB_TOKEN` / `GH_TOKEN` in
+the daemon's environment, and give it a dedicated channel. Each Slack thread keeps a
+resumable session. The default is read-only (file writes are **denied** so a write
+request is refused rather than executed); add `extra_args = ["--allow-all-tools"]` to
+let it edit (use a private repo).
+
 ## 10. Kill switch & audit
 
     cc-agent-messenger kill on     # halt all inbound/outbound

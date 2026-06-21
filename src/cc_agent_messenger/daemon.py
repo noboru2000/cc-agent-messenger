@@ -127,10 +127,14 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         )
 
         def run_fn(a: "multiagent.AgentConfig", prompt: str) -> str:
+            spec = a.to_spec()
             sid = session.get_session(ctx.cfg, a.name, thread_ts)
-            result = agentrunner.run_turn(a.to_spec(), prompt, session_id=sid, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS)
-            if result.session_id:
-                session.set_session(ctx.cfg, a.name, thread_ts, result.session_id)
+            if sid is None and spec.kind == "copilot":
+                sid = str(uuid.uuid4())  # copilot doesn't return a session id; pick one up front
+            result = agentrunner.run_turn(spec, prompt, session_id=sid, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS)
+            token = result.session_id or sid  # claude: captured id; copilot: the uuid we passed
+            if token:
+                session.set_session(ctx.cfg, a.name, thread_ts, token)
             if result.is_error:
                 return f"⚠️ {a.name}: {result.error or 'the turn failed'}"
             return result.text or "(the agent returned no output)"

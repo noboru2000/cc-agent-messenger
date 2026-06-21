@@ -105,6 +105,34 @@ def _parse_claude_json(stdout: str) -> dict | None:
     return None
 
 
+# Read-only / plan-centric default for a Copilot C1 agent: deny the file-write tool
+# so a write request is refused *gracefully* (empirically: instead of hanging on an
+# approval that never comes in non-interactive mode), while read-only tools (e.g.
+# `git status`) still run. Skipped when extra_args opt into tools.
+COPILOT_READONLY_DENY = "--deny-tool=write"
+
+
+def build_copilot_command(spec: AgentSpec, prompt: str, *, session_id: str | None = None, read_only: bool = True) -> list[str]:
+    """argv for a headless ``copilot -p`` turn (clean text via ``-s``).
+
+    Resume is by a caller-supplied ``--session-id`` (the CLI does not print the id in
+    -p mode, so the daemon generates and reuses one UUID per Slack thread).
+    ``--no-ask-user`` stops it blocking on clarifying questions.
+    """
+
+    if spec.integration != "c1":
+        raise ValueError(f"agent {spec.name!r} is not a C1 agent (integration={spec.integration})")
+    binary = shlex.split(spec.cli)[0] if spec.cli else "copilot"
+    argv = [binary, "-p", prompt, "-s", "--no-ask-user"]
+    if session_id:
+        argv += ["--session-id", session_id]
+    opted_into_tools = _has_flag(spec.extra_args, "--allow-all-tools") or _has_flag(spec.extra_args, "--allow-tool")
+    if read_only and not opted_into_tools:
+        argv.append(COPILOT_READONLY_DENY)
+    argv += [*spec.extra_args]
+    return argv
+
+
 def run_turn(
     spec: AgentSpec,
     prompt: str,
@@ -125,6 +153,9 @@ def run_turn(
     if spec.kind == "claude":
         argv = build_claude_command(spec, session_id=session_id, read_only=read_only)
         stdin: str | None = prompt
+    elif spec.kind == "copilot":
+        argv = build_copilot_command(spec, prompt, session_id=session_id, read_only=read_only)
+        stdin = None
     else:
         argv = build_c1_command(spec, prompt)
         stdin = None

@@ -65,3 +65,14 @@ audit_retention_days = 30
 # cli = "claude -p"
 # # Allow workspace edits instead of the read-only default (use a private repo!):
 # # extra_args = ["--permission-mode", "acceptEdits", "--allowedTools", "Read,Edit,Bash(git *)"]
+#
+# Headless GitHub Copilot on its own channel (install: npm i -g @github/copilot;
+# authenticate via COPILOT_GITHUB_TOKEN / GH_TOKEN in the daemon's environment).
+# Default is read-only (file writes are denied so a request is refused, not run).
+# [[agent]]
+# name = "copilot-headless"
+# integration = "c1"
+# kind = "copilot"
+# channel_id = "C0THIRDCHANNEL"
+# cli = "copilot"
+# # extra_args = ["--allow-all-tools"]   # full autonomy incl. edits (use a private repo!)
