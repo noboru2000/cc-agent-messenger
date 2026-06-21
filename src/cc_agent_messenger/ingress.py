@@ -97,6 +97,11 @@ def _audit_inbound(ctx: AppContext, *, channel_id: str, thread_ts: str, trigger:
     )
 
 
+# Public alias so the multi-agent (C1) path in the daemon can record inbound audit
+# with the same shape as the single-agent ingest pipeline.
+audit_inbound = _audit_inbound
+
+
 def _ingest(
     ctx: AppContext,
     *,

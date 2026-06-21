@@ -49,3 +49,19 @@ audit_retention_days = 30
 # report = "concise"
 # alert = ["temperature.gpu > 85", "loss is NaN or diverging", "training process not running"]
 # enabled = true
+
+# --- Multi-agent: headless C1 agents (optional) -----------------------------
+# Route a *dedicated* Slack channel to a coding-agent CLI the daemon spawns once per
+# message (prompt in -> reply out); the reply is posted back to that channel. Each
+# Slack thread keeps its own resumable session. The default permission is read-only /
+# plan-centric (NN5) — widen per agent via extra_args. The owner + the dedicated
+# channel are the authorization; the kill switch and audit apply as usual.
+#
+# [[agent]]
+# name = "claude-headless"
+# integration = "c1"
+# kind = "claude"            # adapter: json output + per-thread --resume (inferred from cli if omitted)
+# channel_id = "C0SECONDCHANNEL"
+# cli = "claude -p"
+# # Allow workspace edits instead of the read-only default (use a private repo!):
+# # extra_args = ["--permission-mode", "acceptEdits", "--allowedTools", "Read,Edit,Bash(git *)"]
