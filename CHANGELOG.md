@@ -6,6 +6,17 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-21
+
+### Added
+- **Instant "thinking…" ack** (`thinking_ack`, opt-in): the daemon posts a tiny
+  placeholder that @-mentions you the moment a command arrives — so the phone push
+  fires immediately, not after the slow reply — then the reply edits it **in place**
+  via `chat.update`, so one message morphs `🤔 …` → the final answer. Needs only
+  `chat:write` (independent of the 👀→✅ receipts, which sit on your command).
+  Configure with `thinking_ack` / `thinking_text` in `config.toml`. (`thinking.py`,
+  `SlackEgress.update`, daemon ingest hook, egress morph.)
+
 ## [0.3.0] - 2026-06-20
 
 Diagnostics + onboarding. `doctor` now verifies the *installed* bot's real
@@ -136,7 +147,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.1.0...v0.1.1

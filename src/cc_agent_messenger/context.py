@@ -23,3 +23,4 @@ class AppContext:
     heartbeat: object | None = None  # HeartbeatScheduler in the daemon; None elsewhere
     receipts: object | None = None  # ReceiptTracker (👀→✅) in the daemon; None elsewhere
     monitors: object | None = None  # MonitorScheduler in the daemon; None elsewhere
+    thinking: object | None = None  # ThinkingTracker (🤔→reply) in the daemon; None elsewhere

@@ -9,7 +9,7 @@ place. The Slack bot identity (and token) stays in ``ctx.slack``.
 
 from __future__ import annotations
 
-from . import authz, killswitch
+from . import authz, killswitch, thinking
 from .audit import now_utc_iso, truncate_summary, write_entry
 from .context import AppContext
 from .models import (
@@ -81,11 +81,22 @@ def handle_send(req: SendRequest, ctx: AppContext) -> SendResult:
     if req.mention_owner and chunks:
         chunks = [f"<@{cfg.owner_slack_user_id}> {chunks[0]}", *chunks[1:]]
 
-    # 4 + 5. Post each chunk, auditing the outcome.
+    # 4 + 5. Post each chunk, auditing the outcome. If a "thinking…" placeholder was
+    #        posted for this command (thinking_ack), edit it in place for the first
+    #        chunk instead of posting anew — one message morphs 🤔 → the answer.
+    placeholder = thinking.resolve(ctx, req.correlation_id)  # (channel, ts) | None
     posted: list[str] = []
     try:
         for index, chunk in enumerate(chunks):
             options = req.options if index == 0 else None
+            if index == 0 and placeholder is not None:
+                ph_channel, ph_ts = placeholder
+                try:
+                    ctx.slack.update(ph_channel, ph_ts, chunk, options)
+                    posted.append(ph_ts)
+                except Exception:  # stale placeholder -> fall back to a fresh post
+                    posted.append(ctx.slack.post(channel_id, chunk, req.thread_ts, options))
+                continue
             ts = ctx.slack.post(channel_id, chunk, req.thread_ts, options)
             posted.append(ts)
     except Exception as exc:  # pragma: no cover - exercised via fake raising

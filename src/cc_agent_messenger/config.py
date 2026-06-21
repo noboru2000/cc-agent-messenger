@@ -45,6 +45,11 @@ class Config:
     interpretation_mode: str = "flexible"  # "flexible" | "strict" (§2.6)
     max_chunk_chars: int = 3900
     audit_retention_days: int = 30
+    # Instant "thinking…" ack: the daemon posts a placeholder the moment a command
+    # is received (pushing the owner immediately), then the reply edits it in place
+    # via chat.update — one message goes "🤔 …" → the final answer. Opt-in.
+    thinking_ack: bool = False
+    thinking_text: str = "🤔 …"
 
 
 class ConfigError(ValueError):
