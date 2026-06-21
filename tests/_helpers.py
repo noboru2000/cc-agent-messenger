@@ -35,6 +35,7 @@ class FakeSlack:
         socket_ok: bool = True,
     ) -> None:
         self.calls: list[dict[str, object]] = []
+        self.updates: list[dict[str, object]] = []
         self.reactions: list[tuple[str, str, str, str]] = []
         self._ts = iter(ts_seq or [f"{i}.{i}" for i in range(1, 20)])
         self._raise = raise_exc
@@ -53,6 +54,9 @@ class FakeSlack:
         if self._raise is not None:
             raise self._raise
         return next(self._ts)
+
+    def update(self, channel_id: str, ts: str, text: str, options: list[str] | None = None) -> None:
+        self.updates.append({"channel_id": channel_id, "ts": ts, "text": text, "options": options})
 
     def add_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
         self.reactions.append(("add", channel_id, timestamp, name))

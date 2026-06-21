@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import threading
 
-from . import heartbeat, ingress, killswitch, monitors, multiagent, receipts, sendapi
+from . import heartbeat, ingress, killswitch, monitors, multiagent, receipts, sendapi, thinking
 from .audit import purge_expired
 from .config import DEFAULT_CONFIG_PATH, Config
 from .context import AppContext
@@ -40,6 +40,7 @@ def build_context(cfg: Config, config_path: str | None = None) -> AppContext:
         heartbeat=heartbeat.HeartbeatScheduler(),
         receipts=receipts.ReceiptTracker(),
         monitors=monitor_sched,
+        thinking=thinking.ThinkingTracker(),
     )
 
 
@@ -131,6 +132,7 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         ev = ingress.handle_mention(channel_id=channel_id, user_id=user_id, raw_text=raw_text, ts=ts, thread_ts=thread_ts, ctx=ctx)
         if ev is not None:
             receipts.on_receipt(ctx, channel_id, ev.ts, ev.correlation_id)
+            thinking.on_receipt(ctx, channel_id, thread_ts, ev.correlation_id)
 
     @app.event("message")
     def _on_message(event, context, logger) -> None:  # noqa: ANN001
@@ -148,6 +150,7 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         ev = ingress.handle_mention(channel_id=channel_id, user_id=user_id, raw_text=raw_text, ts=ts, thread_ts=thread_ts, ctx=ctx)
         if ev is not None:
             receipts.on_receipt(ctx, channel_id, ev.ts, ev.correlation_id)
+            thinking.on_receipt(ctx, channel_id, thread_ts, ev.correlation_id)
 
     for command_name in ctx.profile.slash_map:
         @app.command(command_name)

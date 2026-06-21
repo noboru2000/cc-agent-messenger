@@ -61,6 +61,15 @@ class SlackEgress:
         response = self._client.chat_postMessage(**kwargs)
         return str(response["ts"])
 
+    def update(self, channel_id: str, ts: str, text: str, options: list[str] | None = None) -> None:
+        """Edit an existing message in place (``chat.update``) — used to morph a
+        "thinking…" placeholder into the final reply (see ``thinking.py``)."""
+
+        kwargs: dict[str, object] = {"channel": channel_id, "ts": ts, "text": text}
+        if options:
+            kwargs["blocks"] = _build_button_blocks(text, options)
+        self._client.chat_update(**kwargs)
+
     def add_reaction(self, channel_id: str, timestamp: str, name: str) -> None:
         """Add an emoji reaction to a message (needs the ``reactions:write`` scope)."""
 

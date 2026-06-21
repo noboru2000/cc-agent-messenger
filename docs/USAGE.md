@@ -73,6 +73,11 @@ all reach `explain_status`.
   received, and swaps it to ✅ when the reply is sent — instant feedback even if the
   agent is busy. (Needs the `reactions:write` scope — verify with
   `cc-agent-messenger doctor --slack`, or `--live` to actively exercise 👀→✅.)
+- **Instant "thinking…" ack (optional, `thinking_ack`).** With it enabled, the bot
+  posts a placeholder that @-mentions you the instant your command arrives — so your
+  phone pushes immediately — then edits **that same message** into the reply
+  (`🤔 …` → the answer). Enable in `config.toml`; needs only `chat:write`. Note: the
+  push fires on the placeholder, so the slow answer arriving by edit does not re-push.
 - **Complete message turns, concise.** Replies come back as whole messages (not
   live-typed), kept short; long replies are split into coherent chunks. The bot
   `@`-mentions you, so your phone gets a push.

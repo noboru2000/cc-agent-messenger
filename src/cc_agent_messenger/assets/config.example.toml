@@ -26,6 +26,13 @@ interpretation_mode = "flexible"             # "flexible" | "strict"
 max_chunk_chars = 3900
 audit_retention_days = 30
 
+# Instant "thinking…" ack (optional). On receiving a command, the daemon posts a
+# placeholder that @-mentions you (so the phone push fires immediately), then edits
+# it in place into the reply — one message goes "🤔 …" → the answer. Needs only
+# chat:write. Off by default; uncomment to enable.
+# thinking_ack = true
+# thinking_text = "🤔 …"
+
 # --- Scheduled monitors (optional; OPERATIONS.md §6) ---
 # Fixed-interval reports. The daemon ticks every `every`; the live session gathers
 # the content (the read-only `probe` and/or the natural-language `items` it
