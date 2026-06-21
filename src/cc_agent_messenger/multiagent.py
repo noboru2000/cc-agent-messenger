@@ -29,9 +29,23 @@ class AgentConfig:
     ingress_path: str | None = None  # C0: file watched by that agent's live session
     cli: str | None = None  # C1: base headless command, e.g. "codex exec"
     extra_args: tuple[str, ...] = ()  # C1: sandbox/approval flags (NN5)
+    kind: str = "generic"  # C1 adapter: "claude" | "copilot" | "generic"
 
     def to_spec(self) -> AgentSpec:
-        return AgentSpec(self.name, self.integration, self.channel_id, self.cli, self.extra_args)
+        return AgentSpec(self.name, self.integration, self.channel_id, self.cli, self.extra_args, self.kind)
+
+
+def infer_kind(cli: str | None) -> str:
+    """Best-effort adapter kind from the base CLI command (overridable via `kind`)."""
+
+    if not cli:
+        return "generic"
+    head = cli.strip().split()[0] if cli.strip() else ""
+    if head == "claude":
+        return "claude"
+    if head == "copilot":
+        return "copilot"
+    return "generic"
 
 
 def load_agents(path: str) -> list[AgentConfig]:
@@ -41,14 +55,16 @@ def load_agents(path: str) -> list[AgentConfig]:
         data = tomllib.load(handle)
     agents: list[AgentConfig] = []
     for item in data.get("agent", []):
+        cli = item.get("cli")
         agents.append(
             AgentConfig(
                 name=str(item["name"]),
                 integration=str(item.get("integration", "c0")),
                 channel_id=str(item["channel_id"]),
                 ingress_path=item.get("ingress_path"),
-                cli=item.get("cli"),
+                cli=cli,
                 extra_args=tuple(str(a) for a in item.get("extra_args", [])),
+                kind=str(item.get("kind") or infer_kind(cli)),
             )
         )
     return agents

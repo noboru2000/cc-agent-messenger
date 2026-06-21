@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Noboru Harada
-"""Router — channel → agent resolution (SKELETON).
+"""Router — channel → agent resolution.
 
 See ``docs/MULTI_AGENT_DESIGN.md`` §5/§10. Dedicated channel per agent: the
-``channel_id`` selects the agent. This is the C-ready identity-map layer; not yet
-wired into the daemon ingress (single-agent C0 for now).
+``channel_id`` selects the agent. Wired into the daemon ingress: a message in an
+agent's channel is routed to that agent (C0 append, or a C1 headless turn).
 """
 
 from __future__ import annotations

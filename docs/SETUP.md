@@ -229,6 +229,28 @@ uses on its own to tell you e.g. "実験が完了しました" when a long job f
   project-unique socket/ingress paths. Do **not** share one app across multiple
   daemons (Socket Mode distributes events across an app's connections).
 
+### Add a headless Claude (C1) agent
+
+Append an `[[agent]]` block to `.cc-agent-messenger/config.toml` (a commented example
+ships in the file). For a headless Claude agent on a second channel:
+
+    [[agent]]
+    name = "claude-headless"
+    integration = "c1"
+    kind = "claude"          # json output + per-thread --resume (inferred from cli if omitted)
+    channel_id = "C0SECONDCHANNEL"
+    cli = "claude -p"
+
+The daemon spawns `claude -p` once per message, **resumes the session per Slack
+thread**, and posts the reply back. The default permission is **read-only /
+plan-centric** (status, analysis, proposals — no edits, and it never hangs on a
+permission prompt). To let it edit the repo, widen per agent (use a private repo!):
+
+    extra_args = ["--permission-mode", "acceptEdits", "--allowedTools", "Read,Edit,Bash(git *)"]
+
+C1 turns respect the kill switch and are audited like the live path, and they run off
+the ingest thread so a long turn never blocks new messages.
+
 ## 10. Kill switch & audit
 
     cc-agent-messenger kill on     # halt all inbound/outbound

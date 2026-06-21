@@ -6,6 +6,18 @@ semantic versioning.
 
 ## [Unreleased]
 
+### Added
+- **Headless Claude agents (C1), wired end-to-end.** Route a dedicated Slack channel
+  to a `claude -p` agent via an `[[agent]]` block (`integration = "c1"`,
+  `kind = "claude"`): the daemon spawns the CLI once per message, **resumes the
+  session per Slack thread**, and posts the reply back. Default permission is
+  read-only / plan-centric (NN5; widen per agent via `extra_args`). C1 turns honor
+  the kill switch, are audited like the live path, and run on a bounded worker pool
+  so a long turn never blocks ingest. New `session.py` (per-thread resume store under
+  `.cc-agent-messenger/`), a per-kind adapter in `agentrunner.py`
+  (`build_claude_command` + JSON parsing + `TurnResult`), and `AgentConfig.kind`.
+  (Codex / Copilot C1 adapters land next.)
+
 ## [0.5.0] - 2026-06-22
 
 ### Changed

@@ -11,8 +11,15 @@ from __future__ import annotations
 
 import re
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from . import heartbeat, ingress, killswitch, monitors, multiagent, receipts, sendapi, thinking
+
+# A headless C1 turn (spawning a coding-agent CLI) can take many seconds, so it runs
+# off the Slack ingress handler in a small worker pool and the reply is posted when
+# the turn finishes. Bounded so a burst of messages can't fork unbounded subprocesses.
+C1_TURN_TIMEOUT_SECONDS = 180.0
+C1_MAX_WORKERS = 4
 from .audit import purge_expired
 from .config import DEFAULT_CONFIG_PATH, Config
 from .context import AppContext
@@ -83,9 +90,15 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
 
     app = App(token=ctx.cfg.slack_bot_token)
     router = multiagent.build_router(ctx.agents)
+    c1_pool = ThreadPoolExecutor(max_workers=C1_MAX_WORKERS, thread_name_prefix="c1")
 
     def _route_mention(channel_id: str, user_id: str, raw_text: str, ts: str, thread_ts: str) -> bool:
-        """Multi-agent path: route by channel. Returns True if handled here."""
+        """Multi-agent path: route by channel. Returns True if handled here.
+
+        Authorization = owner check + the router match (each agent owns a dedicated
+        channel). The kill switch and audit mirror ``ingress._ingest`` so the C1 path
+        is gated the same way; a C1 turn runs on a worker so it can't block ingest.
+        """
 
         if not ctx.agents or user_id != ctx.cfg.owner_slack_user_id:
             return False
@@ -95,13 +108,18 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         import os as _os
         import uuid
 
-        from . import agentrunner, egress
+        from . import agentrunner, egress, session
         from .models import InboundEvent, SendRequest
         from .profile import match_command
 
         clean = ingress.strip_mention(raw_text)
         match = match_command(clean, ctx.profile)
         cid = uuid.uuid4().hex
+
+        if killswitch.is_engaged(ctx.cfg.kill_switch_path):
+            ingress.audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=match.trigger, outcome="ignored", summary="kill switch engaged", correlation_id=None)
+            return True
+
         ev = InboundEvent(
             v=1, source="mention", channel_id=channel_id, thread_ts=thread_ts,
             user_id=user_id, text=clean, ts=ts, trigger=match.trigger,
@@ -109,15 +127,28 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         )
 
         def run_fn(a: "multiagent.AgentConfig", prompt: str) -> str:
-            return agentrunner.run_turn(a.to_spec(), prompt, cwd=_os.getcwd())
+            sid = session.get_session(ctx.cfg, a.name, thread_ts)
+            result = agentrunner.run_turn(a.to_spec(), prompt, session_id=sid, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS)
+            if result.session_id:
+                session.set_session(ctx.cfg, a.name, thread_ts, result.session_id)
+            if result.is_error:
+                return f"⚠️ {a.name}: {result.error or 'the turn failed'}"
+            return result.text or "(the agent returned no output)"
 
         def send_fn(*, text: str, channel_id: str, thread_ts: str | None) -> None:
             egress.handle_send(SendRequest(text=text, thread_ts=thread_ts, channel_id=channel_id, correlation_id=cid), ctx)
 
-        multiagent.dispatch_inbound(
-            agent, event_line=ingress.event_to_line(ev), prompt=clean, thread_ts=thread_ts,
-            append_fn=ingress.append_line, run_fn=run_fn, send_fn=send_fn,
-        )
+        def work() -> None:
+            try:
+                multiagent.dispatch_inbound(
+                    agent, event_line=ingress.event_to_line(ev), prompt=clean, thread_ts=thread_ts,
+                    append_fn=ingress.append_line, run_fn=run_fn, send_fn=send_fn,
+                )
+                ingress.audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=match.trigger, outcome="dispatched", summary=clean, correlation_id=cid)
+            except Exception as exc:  # a worker thread must never die silently
+                ingress.audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=match.trigger, outcome="failed", summary=f"{type(exc).__name__}: {exc}", correlation_id=cid)
+
+        c1_pool.submit(work)
         return True
 
     @app.event("app_mention")
