@@ -16,7 +16,15 @@ semantic versioning.
   so a long turn never blocks ingest. New `session.py` (per-thread resume store under
   `.cc-agent-messenger/`), a per-kind adapter in `agentrunner.py`
   (`build_claude_command` + JSON parsing + `TurnResult`), and `AgentConfig.kind`.
-  (Codex / Copilot C1 adapters land next.)
+  (Codex C1 adapter lands next.)
+- **Headless GitHub Copilot agents (C1).** Same harness with `kind = "copilot"`
+  (`cli = "copilot"`): clean text via `-s`, per-thread resume via a self-supplied
+  `--session-id` UUID (the CLI doesn't print one in `-p` mode), `--no-ask-user` to
+  avoid blocking on clarifying questions. The read-only default denies the file-write
+  tool (`--deny-tool=write`) so a write request is refused gracefully instead of
+  hanging on approval; opt into edits with `extra_args = ["--allow-all-tools"]`. Auth
+  via `COPILOT_GITHUB_TOKEN` / `GH_TOKEN`. Verified empirically against Copilot CLI
+  1.0.63. (`build_copilot_command`.)
 
 ## [0.5.0] - 2026-06-22
 

@@ -12,7 +12,7 @@ from unittest import mock
 
 import _helpers
 from cc_agent_messenger import agentrunner, session
-from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, run_turn
+from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, build_copilot_command, run_turn
 from cc_agent_messenger.multiagent import infer_kind, load_agents
 
 
@@ -124,6 +124,60 @@ class RunTurnGenericTests(unittest.TestCase):
             r = run_turn(spec, "p")
         self.assertFalse(r.is_error)
         self.assertEqual(r.text, "codex says hi")
+
+
+class BuildCopilotCommandTests(unittest.TestCase):
+    def _spec(self, **kw) -> AgentSpec:
+        return AgentSpec("copilot", "c1", "C", cli="copilot", kind="copilot", **kw)
+
+    def test_defaults_silent_no_ask_deny_write(self) -> None:
+        argv = build_copilot_command(self._spec(), "hi")
+        self.assertEqual(argv[:3], ["copilot", "-p", "hi"])  # prompt is the -p value
+        self.assertIn("-s", argv)
+        self.assertIn("--no-ask-user", argv)
+        self.assertIn("--deny-tool=write", argv)
+        self.assertNotIn("--session-id", argv)
+
+    def test_session_id_appended(self) -> None:
+        argv = build_copilot_command(self._spec(), "hi", session_id="uuid-1")
+        self.assertIn("--session-id", argv)
+        self.assertEqual(argv[argv.index("--session-id") + 1], "uuid-1")
+
+    def test_allow_all_tools_skips_readonly_deny(self) -> None:
+        argv = build_copilot_command(self._spec(extra_args=("--allow-all-tools",)), "p")
+        self.assertNotIn("--deny-tool=write", argv)
+        self.assertIn("--allow-all-tools", argv)
+
+    def test_allow_tool_skips_readonly_deny(self) -> None:
+        argv = build_copilot_command(self._spec(extra_args=("--allow-tool=write",)), "p")
+        self.assertNotIn("--deny-tool=write", argv)
+
+    def test_c0_agent_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            build_copilot_command(AgentSpec("copilot", "c0", "C", kind="copilot"), "p")
+
+
+class RunTurnCopilotTests(unittest.TestCase):
+    def _spec(self) -> AgentSpec:
+        return AgentSpec("copilot", "c1", "C", cli="copilot", kind="copilot")
+
+    def test_success_returns_text_and_no_session_id(self) -> None:
+        def fake_run(argv, **kw):
+            self.assertIn("-s", argv)
+            self.assertIsNone(kw.get("input"))  # prompt is the -p value, not stdin
+            return _proc(stdout="copilot answer\n")
+
+        with mock.patch.object(agentrunner.subprocess, "run", side_effect=fake_run):
+            r = run_turn(self._spec(), "q", session_id="u1")
+        self.assertFalse(r.is_error)
+        self.assertEqual(r.text, "copilot answer")
+        self.assertIsNone(r.session_id)  # copilot doesn't emit one; daemon keeps the supplied uuid
+
+    def test_nonzero_exit_no_text_is_error(self) -> None:
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stderr="auth failed", returncode=1)):
+            r = run_turn(self._spec(), "q")
+        self.assertTrue(r.is_error)
+        self.assertIn("auth failed", r.error)
 
 
 class KindInferenceTests(unittest.TestCase):
