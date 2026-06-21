@@ -27,3 +27,6 @@ tmp/
 # OS / editor
 .DS_Store
 *.swp
+
+# Local logo source / working variants (not shipped)
+docs/images/old/

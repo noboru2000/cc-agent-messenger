@@ -18,7 +18,7 @@ profile_path = ".cc-agent-messenger/profile.json"
 audit_log_dir = ".cc-agent-messenger/audit"
 kill_switch_path = ".cc-agent-messenger/KILL_SWITCH"
 send_api_endpoint = ".cc-agent-messenger/send.sock"
-inbound_event_path = "tmp/.slack_message"
+inbound_event_path = ".cc-agent-messenger/tmp/.slack_message"
 
 # --- Behavior ---
 default_agent = "claude"

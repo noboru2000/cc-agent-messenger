@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/logo.png" alt="cc-agent-messenger logo" width="160">
+  <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/logo.png" alt="cc-agent-messenger logo" width="200">
 </p>
 
 # cc-agent-messenger
@@ -26,7 +26,7 @@ Slack チャネルと**ライブの Claude Code セッション**(および Code
 iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
                                        │ 認可(NN4)+ コマンド照合
                                        ▼
-                               tmp/.slack_message  ◄── tail -f Monitor(ライブ Claude セッション)
+           .cc-agent-messenger/tmp/.slack_message  ◄── tail -f Monitor(ライブ Claude セッション)
           iPhone プッシュ ◄── bot chat.postMessage ◄── cc-agent-messenger send(Unix socket 送信 API)
 ```
 
@@ -113,6 +113,22 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 その後、VS Code の Claude Code セッションで **`cc-agent-messenger`** スキルを起動して
 待ち受け開始。`init` が表示する allow ルールを `.claude/settings.json` に貼ると
 ハンズフリーになります。
+
+### `init` が `.gitignore` に追記する内容
+
+`init` は `# cc-agent-messenger` ブロックとして次の **2エントリ** を書き込みます。
+いずれも自動生成される実行時ファイル・秘密情報で、コミットしてはいけません:
+
+| エントリ | 対象 |
+| --- | --- |
+| `.cc-agent-messenger/` | bot が生成する一切:`config.toml`(Slack トークン)、`profile.json`、監査ログ、`KILL_SWITCH`、`send.sock`、`tmp/.slack_message`(Monitor が tail する受信ファイル) |
+| `.claude/skills/cc-agent-messenger/` | `init` がインストール済みパッケージからコピーする skill。毎回再生成されるためコミットしない |
+
+`.claude/` 全体ではなく cc-agent-messenger の **skill フォルダだけ** を ignore します。
+ユーザー自身の Claude Code 資産(`settings.json`、独自の skill / command)はコミット
+可能なまま。`.claude/` に他に何も無ければリポジトリには現れません。(旧バージョンで
+`tmp/` + `*.sock` も ignore していた場合、`init` 再実行はそれらを残したまま skill 行を
+追加します — 既存の `config.toml` がまだそこへ受信ファイルを書く可能性があるため。)
 
 ## コマンド
 
