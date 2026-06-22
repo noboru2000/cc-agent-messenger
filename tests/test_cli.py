@@ -8,6 +8,7 @@ import tempfile
 import threading
 import unittest
 from contextlib import redirect_stdout
+from unittest import mock
 
 import _helpers
 from cc_agent_messenger import cli, sendapi
@@ -163,6 +164,25 @@ class CliRoundTripTests(unittest.TestCase):
             code = cli.main(["send", "--text", "hi", "--no-mention", "--endpoint", ctx.cfg.send_api_endpoint])
         self.assertEqual(code, 0)
         self.assertIn("posted", buf.getvalue())
+
+
+class RestartTests(unittest.TestCase):
+    def test_parses_to_cmd_restart(self) -> None:
+        args = cli.build_parser().parse_args(["restart"])
+        self.assertIs(args.func, cli.cmd_restart)
+        self.assertTrue(args.ingress)  # ingress on by default
+
+    def test_restart_stops_then_starts_daemon(self) -> None:
+        args = cli.build_parser().parse_args(["restart"])
+        with mock.patch.object(cli, "load_config", return_value=object()), \
+             mock.patch.object(cli.lifecycle, "stop", return_value=True) as stop, \
+             mock.patch("cc_agent_messenger.daemon.run") as run, \
+             mock.patch("time.sleep"):
+            with redirect_stdout(io.StringIO()):
+                code = cli.cmd_restart(args)
+        stop.assert_called_once()
+        run.assert_called_once()
+        self.assertEqual(code, 0)
 
 
 if __name__ == "__main__":

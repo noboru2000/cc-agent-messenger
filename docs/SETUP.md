@@ -195,6 +195,38 @@ a quiet gap** is not picked up. While operating:
   app → *Prevent App Nap* if shown, or
   `defaults write com.microsoft.VSCode NSAppSleepDisabled -bool YES`, then restart it.
 
+### Copy-paste prompts for the live session
+
+Drive the bridge from **inside** the running Claude Code session — no window reload,
+history preserved. Paste a block as-is. The ingress path below is the v0.5.x default
+(`.cc-agent-messenger/tmp/.slack_message`); adjust it if your `config.toml` sets a
+different `inbound_event_path`.
+
+- **Re-arm the Monitor** (recover a dead Monitor, or after `cc-agent-messenger restart`):
+
+      Re-arm the cc-agent-messenger Monitor without reloading the window: ensure the
+      ingress file exists (`mkdir -p .cc-agent-messenger/tmp && touch
+      .cc-agent-messenger/tmp/.slack_message`), then run `tail -n 0 -F
+      .cc-agent-messenger/tmp/.slack_message` as a persistent background Monitor, and
+      reply to each appended JSONL event per the cc-agent-messenger skill.
+
+- **Apply an update** (after `init` + `restart`, no reload):
+
+      I ran `cc-agent-messenger init` and `cc-agent-messenger restart`. Re-read the
+      refreshed cc-agent-messenger skill and re-arm the Monitor with `tail -F` — do
+      NOT reload the VS Code window.
+
+- **Catch up on missed messages** (e.g. after the Mac slept / App Nap):
+
+      Catch up: run `cc-agent-messenger pending` to list inbound events not yet
+      processed, handle each (reply via `cc-agent-messenger send`), advance the cursor
+      with `cc-agent-messenger ack <correlation_id>`, then re-arm the Monitor.
+
+- **Stop watching** (detach without killing the session):
+
+      Stop the cc-agent-messenger Monitor (kill the background tail). I will ask you
+      to re-arm it later.
+
 ## 8. End-to-end test
 
 **You → agent** (from the Slack app, in the private channel):
@@ -270,14 +302,18 @@ upgrade.
        cc-agent-messenger init
 
 3. **Restart the daemon** so it runs the new code (a running daemon holds the old
-   version in memory):
+   version in memory). `restart` stops the old one and starts a fresh one — and on
+   startup recreates the ingress file so the live Monitor can reattach:
 
-       cc-agent-messenger stop        # or Ctrl+C in its terminal
-       cc-agent-messenger daemon
+       cc-agent-messenger restart     # = stop + daemon (Ctrl+C in its terminal still works)
 
-4. **Reload the live session** so the refreshed skill loads: in VS Code,
-   Command+Shift+P → "Developer: Reload Window", then re-invoke
-   `/cc-agent-messenger`.
+4. **Re-arm the live session — no window reload needed.** "Developer: Reload Window"
+   clears the live session's history, which is costly mid-task. Instead, in the
+   **live session**, paste the **re-arm prompt** from *§7 → Copy-paste prompts*: the
+   session re-reads the refreshed skill and re-arms `tail -F` while keeping its
+   history. (With `tail -F`, later daemon restarts reattach on their own — you only
+   re-arm when the skill instructions changed or the Monitor had died. A full window
+   reload remains a fallback if you don't mind losing history.)
 
 5. **Verify:**
 

@@ -17,8 +17,18 @@ semantic versioning.
   dir + an empty event file on startup (`ingress.ensure_event_file`), and the skill
   uses `tail -F` (retry if missing/rotated). The bug predates v0.5.0 but v0.5.0's move
   of the ingress file under `.cc-agent-messenger/tmp/` made it reliably reproducible.
-  After upgrading, **restart the daemon**; reload the VS Code window to pick up the
-  `tail -F` skill. (`daemon.run`, `ingress.ensure_event_file`, `SKILL.md`)
+  After upgrading, **restart the daemon** (`cc-agent-messenger restart`) and re-arm
+  the live session in place — a VS Code window reload is no longer required.
+  (`daemon.run`, `ingress.ensure_event_file`, `SKILL.md`)
+
+### Added
+- **`cc-agent-messenger restart`** — stop a running daemon and start a fresh one
+  (= `stop` + `daemon`); startup recreates the ingress file so the live Monitor can
+  reattach. Enables a **no-reload upgrade**: `uv tool upgrade … && init && restart`,
+  then re-arm the live session in place (no "Developer: Reload Window", history kept).
+- **Docs: copy-paste prompts for the live session** (SETUP §7) — re-arm the Monitor,
+  apply an update, catch up on missed messages, stop watching — plus a no-reload
+  upgrade flow (SETUP §11).
 
 ## [0.5.0] - 2026-06-22
 

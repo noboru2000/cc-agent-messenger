@@ -110,6 +110,31 @@ def cmd_stop(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def cmd_restart(args: argparse.Namespace) -> int:
+    """Stop a running daemon (if any) and start a fresh one in the foreground.
+
+    The no-reload upgrade path: ``uv tool upgrade … && cc-agent-messenger init &&
+    cc-agent-messenger restart``. Startup recreates the ingress file, so the live
+    session's ``tail -F`` Monitor reattaches without a VS Code window reload.
+    """
+
+    from . import daemon
+
+    cfg = load_config(args.config)
+    if lifecycle.stop(cfg):
+        import time
+
+        print("stopped the running daemon; restarting…")
+        time.sleep(1.0)  # let the socket + pidfile clear before re-binding
+    else:
+        print("no running daemon to stop; starting fresh")
+    try:
+        daemon.run(cfg, ingress_enabled=args.ingress, config_path=args.config)
+    except KeyboardInterrupt:
+        print("\nshutting down")
+    return 0
+
+
 def cmd_kill(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     if args.state == "on":
@@ -378,6 +403,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_stop = sub.add_parser("stop", help="stop the daemon (via pidfile)")
     p_stop.set_defaults(func=cmd_stop)
+
+    p_restart = sub.add_parser("restart", help="stop a running daemon and start a fresh one (no VS Code reload needed)")
+    p_restart.add_argument("--no-ingress", dest="ingress", action="store_false", default=True, help="serve the send API only")
+    p_restart.set_defaults(func=cmd_restart)
 
     p_kill = sub.add_parser("kill", help="toggle the kill switch")
     p_kill.add_argument("state", choices=["on", "off"])
