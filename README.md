@@ -98,7 +98,7 @@ the skill, then **`cc-agent-messenger restart`** (= stop + start the daemon). `i
 **keeps your existing bot settings** — tokens, owner, channel, and `profile.json` are
 preserved; only the skill is refreshed (it prints what it refreshed vs kept). No VS
 Code window reload is needed — re-arm the live session in place (see
-[docs/SETUP.md](docs/SETUP.md) §11 → *Copy-paste prompts*).
+[docs/SETUP.md](docs/SETUP.md) §7 → *Copy-paste prompts*).
 
 Uninstall:
 

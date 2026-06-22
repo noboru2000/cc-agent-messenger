@@ -2,8 +2,8 @@
 # Copyright (c) 2026 Noboru Harada
 """Unified CLI — `cc-agent-messenger <subcommand>`.
 
-Subcommands: init / uninstall / daemon / send / ping / status / stop / kill /
-doctor / pending / ack / monitors.
+Subcommands: init / uninstall / daemon / send / ping / status / stop / restart /
+kill / doctor / pending / ack / monitors / watch / keepalive / commands.
 See ``docs/PACKAGE_DESIGN.md`` §5–§6. The send/ping/status paths talk to the
 daemon over its Unix socket and never touch the Slack token.
 """
@@ -322,8 +322,9 @@ def cmd_init(args: argparse.Namespace) -> int:
     print(
         "\nFirst run: create the Slack app, fill the config, run `cc-agent-messenger daemon`,\n"
         "  then invoke the cc-agent-messenger skill in Claude Code.\n"
-        "Upgrading: restart the daemon (Ctrl+C or `cc-agent-messenger stop`, then "
-        "`cc-agent-messenger daemon`)\n  and reload the VS Code window so the refreshed skill loads."
+        "Upgrading: run `cc-agent-messenger restart` (= stop + daemon), then paste the\n"
+        "  '② Apply the update' prompt from docs/SETUP.md §7 into the live session.\n"
+        "  No window reload needed."
     )
     return 0
 

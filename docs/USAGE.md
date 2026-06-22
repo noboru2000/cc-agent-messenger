@@ -22,7 +22,7 @@ configured **channel**, is honored — everything else is ignored (NN4).
 > The prefix is configurable (`command_prefix` in `.cc-agent-messenger/profile.json`);
 > `!` by default. `$` and `^` are other safe choices. Avoid `*`, `` ` ``, `&`, `~`,
 > `_`, `>`, `#`, `:`, `@`, `/` — Slack gives those characters special meaning.
-> Native Slack `/slash` commands are **optional**; see [SETUP.md](SETUP.md) §2.4.
+> Native Slack `/slash` commands are **optional**; see [SETUP.md](SETUP.md) §3.
 
 ## Commands
 
@@ -42,7 +42,8 @@ the keywords and let the bot match them.
 | `!doctor` | 診断 / doctor | Runs diagnostics; replies with a redacted health summary. |
 
 Free text that doesn't match a command is **interpreted by the live session** and
-mapped to one of the commands above — it does **not** run arbitrary actions, and
+mapped to one of the commands above or in *Modes & scheduled monitors* below — it
+does **not** run arbitrary actions, and
 anything destructive / irreversible asks for your explicit approval first (NN5).
 You don't have to use exact wording: "状況を教えて", "今どうなってる?", and "status"
 all reach `explain_status`.

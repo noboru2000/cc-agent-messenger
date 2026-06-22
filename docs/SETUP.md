@@ -179,8 +179,9 @@ This is the part that **replies** to your Slack commands.
     /cc-agent-messenger
 
 - If `/` does **not** list it, the skill hasn't loaded: run **Command+Shift+P →
-  "Developer: Reload Window"**, then type `/cc-agent-messenger` again. (Do this
-  **after upgrading**, too — a new version's skill won't load until you reload.)
+  "Developer: Reload Window"**, then type `/cc-agent-messenger` again. (After upgrading, use the **② Apply the
+  update** prompt from the §7 table instead of a reload — it keeps your history and
+  reattaches the Monitor without losing context.)
 - Or just ask in plain language ("cc-agent-messenger のスキルで Slack を待ち受けて").
 
 Once invoked, the live session arms `tail -n 0 -f <inbound_event_path>` and replies
@@ -326,7 +327,7 @@ upgrade.
 
 4. **Re-arm the live session — no window reload needed.** "Developer: Reload Window"
    clears the live session's history, which is costly mid-task. Instead, in the
-   **live session**, paste the **re-arm prompt** from *§7 → Copy-paste prompts*: the
+   **live session**, paste the **② Apply the update** prompt from *§7 → Copy-paste prompts*: the
    session re-reads the refreshed skill and re-arms `tail -F` while keeping its
    history. (With `tail -F`, later daemon restarts reattach on their own — you only
    re-arm when the skill instructions changed or the Monitor had died. A full window
