@@ -67,6 +67,18 @@ all reach `explain_status`.
   reset-on-activity, unlike `MR:`). Probes are read-only; remote changes stay
   NN5-gated.
 
+**From the CLI / live agent (parity).** The same monitor & keep-alive controls work
+from the terminal — and the live session uses these, so a chat request like "monitor
+the GPU every 15m" actually **registers** (no hand-rolled loop):
+
+    cc-agent-messenger watch <id> every:Nm "items"   # register; also: watch list / watch <id> off / watch off
+    cc-agent-messenger keepalive MR:Nm "report"      # toggle;   also: keepalive (no args) = status / keepalive off
+    cc-agent-messenger commands [--all]              # list every command (Slack set; --all also lists CLI)
+
+`!watch` / `!keepalive` from **Slack** and the CLI converge on the **same daemon
+scheduler** (a stop from either stops the same job). `!help` is answered **directly by
+the daemon** — always complete and instant, even when the agent is busy.
+
 ## What to expect
 
 - **Receipt reactions 👀 → ✅.** The bot adds 👀 to your command the moment it is

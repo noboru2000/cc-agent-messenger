@@ -42,7 +42,7 @@ commands (`!status`, `!select 2`, …) and keywords arrive **pre-resolved** into
 
 | `trigger` | Do |
 |---|---|
-| `help` | reply with the available commands (the `!status` / `!options` / … list) |
+| `help` | the **daemon** now answers `!help` directly (authoritative, instant), so you normally **won't see this**. If you do, reply by running `cc-agent-messenger commands`. |
 | `health_check` | `cc-agent-messenger ping`; reply briefly (e.g. "稼働中") |
 | `explain_status` | summarize the current work / experiment state and reply concisely |
 | `report_issues` | report any failures/errors found (read-only) |
@@ -53,12 +53,12 @@ commands (`!status`, `!select 2`, …) and keywords arrive **pre-resolved** into
 | `continue` | resume the planned monitoring loop (or resume after `pause_hold`) |
 | `away` | acknowledge **away mode**: e.g. "離席モード: 最低 *N* 分おきに報告、判断は Slack で確認して待機". The **daemon** runs the min-report timer (`MR:Nm` from the text); you keep working autonomously, **ask via Slack and wait** for any decision / NN5-gated action, and **never end the listen loop**. |
 | `back` | acknowledge "通常モードに戻りました" and resume normal interactive behavior |
-| `keepalive` | acknowledge the heartbeat toggle (`MR:Nm` on, or `off`) |
+| `keepalive` | Slack `!keepalive` is already applied by the daemon — **acknowledge**. For a **chat / NL** request (not via Slack), register it yourself: `cc-agent-messenger keepalive MR:Nm "report content"` (or `off`); status: `cc-agent-messenger keepalive`. |
 | `keep_alive` (timer tick) | the daemon fired the idle heartbeat — reply **briefly** "alive + progress" (use `text` as the requested content if set) and continue. If `args.away` is true you are in away mode. Keep it short; don't repeat unchanged status verbatim. |
-| `watch` | **structured `!watch …`** (e.g. `!watch gpu every:5m "…"`, `!watch gpu off` to stop one, `!watch off` to stop **all**): the daemon already applied it — confirm from the text. For `!watch list` run `cc-agent-messenger monitors` (lists the **configured** `[[monitor]]` jobs). **Natural-language** requests (e.g. 「GPUを5分ごとに監視して」) were **not** auto-applied — reply with the exact form to use (`!watch <id> every:5m "what to report"`, or add a `[[monitor]]` to the config); do **not** claim monitoring started. |
+| `watch` | Slack `!watch …` is already applied by the daemon — **confirm from the text**. **List live monitors**: `cc-agent-messenger watch list` (the running scheduler; `cc-agent-messenger monitors` shows only config `[[monitor]]`). For a **chat / natural-language** request (e.g. 「GPUを15分ごとに監視して」), **register it yourself**: `cc-agent-messenger watch <id> every:Nm "items"`, then confirm. Stop: `cc-agent-messenger watch <id> off` / `cc-agent-messenger watch off`. **Never build your own sleep-loop scheduler** — the daemon owns the timer. |
 | `monitor_tick` (timer tick) | a scheduled monitor fired. **If the kill switch is engaged (a send would return `halted`), skip — run no probe.** Otherwise **gather** the content in `args` — run the read-only `args.probe` **verbatim** if set and interpret `args.items` (e.g. SSH `nvidia-smi`, `tail` a log) — then reply with a **concise report + interpretation** (trend). **Evaluate `args.alert`**: if a rule trips (e.g. `temperature.gpu > 85`, loss NaN/diverging, process down), send a **prominent ⚠️ alert** and @-mention the owner; a routine line may use `--no-mention` to avoid pinging every interval. Never run a non-read-only remote action without explicit NN5 approval. |
 | `system_doctor` | run `cc-agent-messenger doctor` and reply with a redacted summary |
-| `null` (free text) | interpret `text` → map to one command above; if ambiguous, ask `--options "1: A" "2: B"`. Never act outside the closed handler set; NN5-gate destructive actions. |
+| `null` (free text) | interpret `text` → map to one command above; if ambiguous, ask `--options "1: A" "2: B"`. **Recurring requests** ("N分ごとに監視/生存報告") → **register via the CLI** (`cc-agent-messenger watch …` / `keepalive …`), don't reinvent a loop. Never act outside the closed handler set; NN5-gate destructive actions. |
 
 ## Staying responsive (reliability)
 
@@ -93,6 +93,22 @@ So:
   top level.
 - Ask with buttons: add `--options "1: ..." "2: ..."`.
 - **Proactive (S1):** when a long task finishes, send with **no** `--thread`.
+
+## Commands you can run (cc-agent-messenger CLI)
+
+All actions go through the CLI — the daemon owns the bot token and the schedulers.
+**Never post to Slack directly, and never build your own scheduler / sleep loop.**
+
+- Reply: `cc-agent-messenger send --thread <ts> --correlation-id <cid> --text "…" [--options "1: …" "2: …"] [--no-mention]`
+- Catch up: `cc-agent-messenger pending` / `cc-agent-messenger ack <correlation_id>`
+- Monitors (live): register `cc-agent-messenger watch <id> every:Nm "items"`; list `cc-agent-messenger watch list`; stop `cc-agent-messenger watch <id> off` / `watch off`
+- Keep-alive: `cc-agent-messenger keepalive MR:Nm "report content"` / `off`; status `cc-agent-messenger keepalive`
+- Discover: `cc-agent-messenger commands` (Slack/chat set) / `--all` (also lists CLI)
+- Health: `cc-agent-messenger ping`; diagnostics: `cc-agent-messenger doctor`
+
+`!watch` / `!keepalive` from **Slack** are applied by the daemon (just acknowledge);
+the same `watch` / `keepalive` CLI lets you fulfil a **chat / NL** request without
+reinventing a loop.
 
 ## Reply rule (NN11)
 

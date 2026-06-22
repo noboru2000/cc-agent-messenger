@@ -86,6 +86,17 @@ def due(state: KeepAliveState, now: float) -> bool:
     return now - max(state.last_activity, state.last_tick) >= state.interval_s
 
 
+def state_summary(state: KeepAliveState) -> str:
+    """Human one-liner for a keep-alive state (used by the status query, read-only)."""
+
+    if not state.enabled:
+        return "keep-alive: off"
+    every = f"{int(state.interval_s)}s" if state.interval_s < 60 else f"{state.interval_s / 60:g}m"
+    mode = " (away)" if state.away else ""
+    content = f' "{state.content}"' if state.content else ""
+    return f"keep-alive: every {every}{mode}{content}"
+
+
 def keepalive_event(channel_id: str, state: KeepAliveState, owner_user_id: str = "") -> InboundEvent:
     return InboundEvent(
         v=1,
@@ -120,6 +131,12 @@ class HeartbeatScheduler:
 
     def apply_mode(self, channel_id: str, trigger: str, text: str, now: float) -> KeepAliveState:
         return apply_mode(self._state(channel_id), trigger, text, now)
+
+    def summary(self, channel_id: str) -> str:
+        """Read-only status of a channel's keep-alive (no mutation)."""
+
+        state = self.states.get(channel_id)
+        return state_summary(state) if state is not None else "keep-alive: off (not set)"
 
     def due_events(self, now: float, owner_user_id: str = "") -> list[InboundEvent]:
         """Channels silent for >= their interval: emit a tick and restart the timer."""

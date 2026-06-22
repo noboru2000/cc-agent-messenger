@@ -97,6 +97,56 @@ def cmd_ping(args: argparse.Namespace) -> int:
     return 0 if resp.get("status") == "alive" else 1
 
 
+def _ipc_command(args: argparse.Namespace, op: str) -> int:
+    """Send a `watch`/`keepalive` op to the running daemon and print the ack.
+
+    Parity with the Slack `!watch` / `!keepalive` path: the daemon applies it to the
+    same live scheduler. Lets the live agent (or the owner) register from the CLI."""
+
+    endpoint = _resolve_endpoint(args)
+    if not endpoint:
+        print("error: send API endpoint not set (--endpoint / $SEND_API_ENDPOINT / config)", file=sys.stderr)
+        return 2
+    text = " ".join(args.args).strip()
+    try:
+        resp = ipcclient.request(endpoint, {"v": 1, "op": op, "text": text})
+    except OSError as exc:
+        print(json.dumps({"status": "failed", "reason": f"connect_error: {exc}"}))
+        return 1
+    print(json.dumps(resp, ensure_ascii=False))
+    return 0 if resp.get("status") == "ok" else 1
+
+
+def cmd_watch(args: argparse.Namespace) -> int:
+    return _ipc_command(args, "watch")
+
+
+def cmd_keepalive(args: argparse.Namespace) -> int:
+    return _ipc_command(args, "keepalive")
+
+
+def cmd_commands(args: argparse.Namespace) -> int:
+    """Print the Slack/chat command set (`!…`). `--all` also lists the CLI subcommands."""
+
+    from . import commands as _cmds
+
+    lang = args.lang
+    if args.route:
+        header = "使えるコマンド (route):" if lang == "ja" else "Available commands (route):"
+        lines = [header]
+        for c in _cmds.REGISTRY:
+            desc = c.desc_ja if lang == "ja" else c.desc_en
+            lines.append(f"!{_cmds.bang_name(c)} [{c.route}] … {desc}")
+        print("\n".join(lines))
+    else:
+        print(_cmds.help_text(lang=lang))
+    if args.all:
+        subs = [a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction)]
+        names = list(subs[0].choices) if subs else []
+        print("\n" + ("CLI コマンド: " if lang == "ja" else "CLI commands: ") + ", ".join(names))
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     print(json.dumps(lifecycle.status(cfg), ensure_ascii=False))
@@ -427,6 +477,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_monitors = sub.add_parser("monitors", help="list the scheduled monitors defined in config ([[monitor]])")
     p_monitors.set_defaults(func=cmd_monitors)
+
+    p_watch = sub.add_parser("watch", help="register/list/toggle a daemon monitor (parity with Slack !watch)")
+    p_watch.add_argument("args", nargs="*", help='<id> [every:Nm] ["items"] | list | <id> on|off | off')
+    p_watch.add_argument("--endpoint", default=None, help="Unix socket path override")
+    p_watch.set_defaults(func=cmd_watch)
+
+    p_keepalive = sub.add_parser("keepalive", help="toggle/query the keep-alive heartbeat (parity with Slack !keepalive)")
+    p_keepalive.add_argument("args", nargs="*", help='MR:Nm ["items"] | off | (empty = status)')
+    p_keepalive.add_argument("--endpoint", default=None, help="Unix socket path override")
+    p_keepalive.set_defaults(func=cmd_keepalive)
+
+    p_commands = sub.add_parser("commands", help="list the Slack/chat command set (!…); --all also lists CLI commands")
+    p_commands.add_argument("--lang", choices=["ja", "en"], default="ja")
+    p_commands.add_argument("--route", action="store_true", help="annotate each command's handler (daemon/agent/both)")
+    p_commands.add_argument("--all", action="store_true", help="also list the CLI subcommands")
+    p_commands.set_defaults(func=cmd_commands)
 
     return parser
 

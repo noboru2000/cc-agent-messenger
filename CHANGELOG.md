@@ -20,6 +20,17 @@ semantic versioning.
   After upgrading, **restart the daemon** (`cc-agent-messenger restart`) and re-arm
   the live session in place — a VS Code window reload is no longer required.
   (`daemon.run`, `ingress.ensure_event_file`, `SKILL.md`)
+- **`!keepalive` / `!watch` (and the full command set) are reachable and discoverable
+  from every surface.** They were only registerable via Slack ingest and were absent
+  from `cc-agent-messenger --help`, the `!help` reply, and the CLI — so neither the
+  owner nor the live agent could find or drive them (the agent reinvented its own
+  loop). Now: new **`cc-agent-messenger watch` / `keepalive`** CLI register on the
+  **same running-daemon scheduler** as Slack (parity; killswitch-gated; `watch list`
+  / `keepalive` show live state); **`!help` is answered directly by the daemon** with
+  the authoritative, complete list (instant, not the agent's improvisation); and
+  **`cc-agent-messenger commands [--all]`** lists the whole command set. A per-command
+  `route` (daemon / agent / both) now drives this in one place.
+  (`commands.route`, `sendapi`, `ingress`, `cli`, `heartbeat.summary`, `SKILL.md`, USAGE)
 
 ### Added
 - **`cc-agent-messenger restart`** — stop a running daemon and start a fresh one
