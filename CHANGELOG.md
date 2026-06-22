@@ -6,6 +6,20 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-22
+
+### Fixed
+- **Slack messages get a reply again.** The live session arms a Monitor with
+  `tail -n 0 -F <inbound_event_path>`, but if the event file did not exist yet (it
+  was created lazily on the first event) a plain `tail -f` died immediately ("No such
+  file or directory") on macOS — so the Monitor never watched and the agent never
+  replied (only the daemon's 👀 receipt appeared). The daemon now creates the ingress
+  dir + an empty event file on startup (`ingress.ensure_event_file`), and the skill
+  uses `tail -F` (retry if missing/rotated). The bug predates v0.5.0 but v0.5.0's move
+  of the ingress file under `.cc-agent-messenger/tmp/` made it reliably reproducible.
+  After upgrading, **restart the daemon**; reload the VS Code window to pick up the
+  `tail -F` skill. (`daemon.run`, `ingress.ensure_event_file`, `SKILL.md`)
+
 ## [0.5.0] - 2026-06-22
 
 ### Changed
@@ -169,7 +183,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...v0.3.0
