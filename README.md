@@ -94,10 +94,11 @@ PyPI badge above, <https://pypi.org/project/cc-agent-messenger/>, or
 pip: `pip install -U cc-agent-messenger`.)
 
 After upgrading, **re-run `cc-agent-messenger init` in the same project** to refresh
-the skill to the new version, then restart the daemon. `init` **keeps your existing
-bot settings** — tokens, owner, channel, and `profile.json` are preserved; only the
-skill is refreshed (it prints what it refreshed vs kept). See
-[docs/SETUP.md](docs/SETUP.md) §10.
+the skill, then **`cc-agent-messenger restart`** (= stop + start the daemon). `init`
+**keeps your existing bot settings** — tokens, owner, channel, and `profile.json` are
+preserved; only the skill is refreshed (it prints what it refreshed vs kept). No VS
+Code window reload is needed — re-arm the live session in place (see
+[docs/SETUP.md](docs/SETUP.md) §11 → *Copy-paste prompts*).
 
 Uninstall:
 
@@ -140,11 +141,14 @@ simply won't appear in the repo. (Upgrading from a version that also ignored
 
 ## Commands
 
-**CLI:** `cc-agent-messenger <init | uninstall | daemon | send | ping | status |
-stop | kill on|off | doctor | pending | ack | monitors>` — see
-`cc-agent-messenger --help`. `doctor --slack` probes the **live bot** (auth, granted
-scopes — flags a missing `reactions:write` — channel membership, Socket Mode);
-add `--live` for an active 👀→✅ receipt self-test (posts a probe to the channel).
+**CLI:** `cc-agent-messenger <init | uninstall | daemon | restart | send | ping |
+status | stop | kill on|off | doctor | pending | ack | monitors | watch | keepalive |
+commands>` — see `cc-agent-messenger --help`. `restart` = stop + start the daemon
+(enables a no-reload upgrade). `watch` / `keepalive` register on the running daemon —
+the **same scheduler** as Slack `!watch` / `!keepalive`; `commands [--all]` lists every
+command. `doctor --slack` probes the **live bot** (auth, granted scopes — flags a
+missing `reactions:write` — channel membership, Socket Mode); add `--live` for an
+active 👀→✅ receipt self-test (posts a probe to the channel).
 
 **From Slack** (`@bot` + a leading `!`, deterministic, no Slack slash registration —
 or plain words / buttons / emoji):

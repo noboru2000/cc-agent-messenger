@@ -88,10 +88,11 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 `uv pip index versions cc-agent-messenger` で確認できます(pipx:
 `pipx upgrade cc-agent-messenger`、pip: `pip install -U cc-agent-messenger`)。
 
-更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を新バージョンへ
-更新し、daemon を再起動します。`init` は**現在の bot 設定を引き継ぎます** —
-トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
-(何を更新し何を保持したか表示します)。[docs/SETUP.ja.md](docs/SETUP.ja.md) §11 参照。
+更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を更新し、
+**`cc-agent-messenger restart`**(= stop + daemon)します。`init` は**現在の bot 設定を引き継ぎます**
+— トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
+(何を更新し何を保持したか表示します)。**VS Code ウィンドウのリロードは不要**で、ライブ
+セッションはその場で張り直せます([docs/SETUP.ja.md](docs/SETUP.ja.md) §11 → コピペプロンプト)。
 
 アンインストール:
 
@@ -132,12 +133,12 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## コマンド
 
-`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor | pending | ack | monitors>`
-— 詳細は `cc-agent-messenger --help`。`doctor --slack` は**稼働中の bot** を診断
+`cc-agent-messenger <init | uninstall | daemon | restart | send | ping | status | stop | kill on|off | doctor | pending | ack | monitors | watch | keepalive | commands>`
+— 詳細は `cc-agent-messenger --help`。`restart`=stop+daemon(リロード不要アップグレード用)、`watch`/`keepalive` は稼働中 daemon に登録(Slack の `!watch`/`!keepalive` と**同一スケジューラ**)、`commands [--all]` で全コマンド一覧。`doctor --slack` は**稼働中の bot** を診断
 (認証・付与スコープ〔`reactions:write` 漏れも検出〕・チャネル参加・Socket Mode)、
 `--live` を付けると 👀→✅ レシートを実走テスト(チャネルにプローブを投稿)。
 Slack からは `/help`、`/status`、`/options`、`/continue`、`/doctor`、または
-`@bot <メッセージ>` — 全コマンドは [docs/USAGE.md](docs/USAGE.md) を参照。
+`@bot <メッセージ>` — 全コマンドは [docs/USAGE.ja.md](docs/USAGE.ja.md) を参照。
 
 ## 制限
 
