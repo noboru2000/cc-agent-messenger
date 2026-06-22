@@ -1,5 +1,7 @@
 # Setup & operation
 
+**English** | [日本語](SETUP.ja.md)
+
 End-to-end guide: open your project, install `cc-agent-messenger`, create the Slack
 app, configure it, run it, and verify the round trip. Host-specific values use
 placeholders like `<bot-name>` / `<owner-user-id>` / `<channel-id>`. Real tokens stay

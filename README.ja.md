@@ -91,7 +91,7 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を新バージョンへ
 更新し、daemon を再起動します。`init` は**現在の bot 設定を引き継ぎます** —
 トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
-(何を更新し何を保持したか表示します)。[docs/SETUP.md](docs/SETUP.md) §10 参照。
+(何を更新し何を保持したか表示します)。[docs/SETUP.ja.md](docs/SETUP.ja.md) §11 参照。
 
 アンインストール:
 
@@ -103,7 +103,7 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
     cd your-project
     cc-agent-messenger init          # skill / 設定テンプレ / .gitignore / allowlist を配置
-    # 1) Slack アプリ作成(Socket Mode + スコープ + Event Subscriptions);docs/SETUP.md
+    # 1) Slack アプリ作成(Socket Mode + スコープ + Event Subscriptions);docs/SETUP.ja.md
     # 2) .cc-agent-messenger/config.toml にトークン + チャンネル ID を記入
     cc-agent-messenger daemon        # 常駐 bot 起動
 
@@ -147,7 +147,7 @@ Slack からは `/help`、`/status`、`/options`、`/continue`、`/doctor`、ま
 
 ## ドキュメント
 
-- [docs/SETUP.md](docs/SETUP.md) — Slack アプリ作成・招待・設定・起動・E2E・トラブルシュート。
+- [docs/SETUP.ja.md](docs/SETUP.ja.md) — Slack アプリ作成・招待・設定・起動・E2E・トラブルシュート。
 - [docs/USAGE.ja.md](docs/USAGE.ja.md) — Slack コマンドリファレンス(`/help`・`/status` 等)・
   キーワード・起動後の期待動作。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — C0 ループ・egress chokepoint・4入力面・

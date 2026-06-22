@@ -29,6 +29,9 @@ semantic versioning.
 - **Docs: copy-paste prompts for the live session** (SETUP §7) — re-arm the Monitor,
   apply an update, catch up on missed messages, stop watching — plus a no-reload
   upgrade flow (SETUP §11).
+- **Docs: Japanese setup guide** — `docs/SETUP.ja.md` (full translation of
+  `docs/SETUP.md`); SETUP.md is now English-only with an `English | 日本語` switcher,
+  and README.ja links point to the Japanese guide.
 
 ## [0.5.0] - 2026-06-22
 
