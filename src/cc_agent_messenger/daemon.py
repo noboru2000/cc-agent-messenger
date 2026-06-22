@@ -206,6 +206,11 @@ def run(cfg: Config, ingress_enabled: bool = True, config_path: str | None = Non
             sendapi.serve(ctx)
             return
 
+        # Ensure the ingress file exists so the live session's `tail -F`/`-f` has a
+        # target the moment the skill is invoked (it is otherwise created lazily on
+        # the first message, and a tail armed before then dies — no replies).
+        ingress.ensure_event_file(cfg.inbound_event_path)
+
         thread = threading.Thread(target=sendapi.serve, args=(ctx,), daemon=True)
         thread.start()
         threading.Thread(target=_run_heartbeat, args=(ctx,), daemon=True).start()

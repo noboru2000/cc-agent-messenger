@@ -26,6 +26,25 @@ def _profile() -> Profile:
     )
 
 
+class EnsureEventFileTests(unittest.TestCase):
+    def test_creates_dir_and_empty_file(self) -> None:
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "tmp", ".slack_message")
+        self.assertFalse(os.path.exists(path))
+        ingress.ensure_event_file(path)
+        self.assertTrue(os.path.isfile(path))  # tail -F/-f now has a target
+        self.assertEqual(os.path.getsize(path), 0)
+
+    def test_preserves_existing_content(self) -> None:
+        d = tempfile.mkdtemp()
+        path = os.path.join(d, "tmp", ".slack_message")
+        ingress.ensure_event_file(path)
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write('{"v":1}\n')
+        ingress.ensure_event_file(path)  # idempotent — must not truncate
+        self.assertEqual(open(path, encoding="utf-8").read(), '{"v":1}\n')
+
+
 class IngressTests(unittest.TestCase):
     def setUp(self) -> None:
         self.dir = tempfile.mkdtemp()

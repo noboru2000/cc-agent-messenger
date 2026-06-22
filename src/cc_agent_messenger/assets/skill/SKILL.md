@@ -23,9 +23,12 @@ the Mac stay awake and this session is running).
 
 Start a **persistent** Monitor on the ingress file (plain `tail`, no pipe):
 
-    tail -n 0 -f <inbound_event_path>
+    tail -n 0 -F <inbound_event_path>
 
-`-n 0` fires only on lines appended after arming. The Monitor is the **low-latency**
+Use **`-F`** (capital): it retries if the file does not exist yet or is rotated, so
+the Monitor survives even when armed before the first event (plain `-f` dies with
+"No such file or directory" and you would never see a message). `-n 0` fires only on
+lines appended after arming. The Monitor is the **low-latency**
 wake; for correctness use the **catch-up cursor** below (a missed/late wake is then
 harmless).
 

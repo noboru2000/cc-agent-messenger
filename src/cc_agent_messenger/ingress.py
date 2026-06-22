@@ -74,6 +74,22 @@ def append_line(path: str, line: str) -> None:
         handle.write(line + "\n")
 
 
+def ensure_event_file(path: str) -> None:
+    """Create the ingress dir + an empty event file so the live session's
+    ``tail -F``/``-f`` always has a target.
+
+    Otherwise the file is created lazily on the first event, and a ``tail -f`` armed
+    before then dies immediately ("No such file or directory") — so the live session
+    never sees any message. The daemon calls this on startup.
+    """
+
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    if not os.path.exists(path):
+        open(path, "a", encoding="utf-8").close()
+
+
 def _append_event(ev: InboundEvent, path: str) -> None:
     append_line(path, event_to_line(ev))
 
