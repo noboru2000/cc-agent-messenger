@@ -199,35 +199,50 @@ a quiet gap** is not picked up. While operating:
 
 ### Copy-paste prompts for the live session
 
-Drive the bridge from **inside** the running Claude Code session — no window reload,
-history preserved. Paste a block as-is. The ingress path below is the v0.5.x default
-(`.cc-agent-messenger/tmp/.slack_message`); adjust it if your `config.toml` sets a
+Paste these **into the running Claude Code session** to drive the bridge in place —
+no window reload, history kept. **Pick by situation:**
+
+| When this happens | First, in a terminal | Then paste into the live session |
+|---|---|---|
+| First time / a new session | (make sure the daemon is running) | **① Start** |
+| You upgraded the tool | `uv tool upgrade cc-agent-messenger && cc-agent-messenger init && cc-agent-messenger restart` | **② Apply the update** |
+| No replies / the Monitor died | `cc-agent-messenger restart` (if unsure) | **③ Re-arm** |
+| Mac woke from sleep / replies feel missed | — | **④ Catch up** |
+| You want it to stop watching | — | **⑤ Stop** |
+
+The ingress path in the prompts is the v0.5.x default
+(`.cc-agent-messenger/tmp/.slack_message`); change it if your `config.toml` sets a
 different `inbound_event_path`.
 
-- **Re-arm the Monitor** (recover a dead Monitor, or after `cc-agent-messenger restart`):
+**① Start** — begin watching (equivalently, just invoke the `cc-agent-messenger` skill):
 
-      Re-arm the cc-agent-messenger Monitor without reloading the window: ensure the
-      ingress file exists (`mkdir -p .cc-agent-messenger/tmp && touch
-      .cc-agent-messenger/tmp/.slack_message`), then run `tail -n 0 -F
-      .cc-agent-messenger/tmp/.slack_message` as a persistent background Monitor, and
-      reply to each appended JSONL event per the cc-agent-messenger skill.
+      Use the cc-agent-messenger skill: read inbound_event_path from
+      .cc-agent-messenger/config.toml, arm a persistent Monitor with
+      `tail -n 0 -F <inbound_event_path>`, and reply to each event per the skill.
 
-- **Apply an update** (after `init` + `restart`, no reload):
+**② Apply the update** — after you ran `init` + `restart` (no window reload):
 
       I ran `cc-agent-messenger init` and `cc-agent-messenger restart`. Re-read the
-      refreshed cc-agent-messenger skill and re-arm the Monitor with `tail -F` — do
-      NOT reload the VS Code window.
+      refreshed cc-agent-messenger skill and re-arm the Monitor with `tail -F`.
+      Do NOT reload the VS Code window.
 
-- **Catch up on missed messages** (e.g. after the Mac slept / App Nap):
+**③ Re-arm** — bring a dead Monitor back (replies stopped):
 
-      Catch up: run `cc-agent-messenger pending` to list inbound events not yet
-      processed, handle each (reply via `cc-agent-messenger send`), advance the cursor
-      with `cc-agent-messenger ack <correlation_id>`, then re-arm the Monitor.
+      Re-arm the cc-agent-messenger Monitor without reloading: ensure the file exists
+      (`mkdir -p .cc-agent-messenger/tmp && touch .cc-agent-messenger/tmp/.slack_message`),
+      then run `tail -n 0 -F .cc-agent-messenger/tmp/.slack_message` as a persistent
+      background Monitor and resume replying per the skill.
 
-- **Stop watching** (detach without killing the session):
+**④ Catch up** — after sleep or a suspected missed wake:
 
-      Stop the cc-agent-messenger Monitor (kill the background tail). I will ask you
-      to re-arm it later.
+      Catch up: run `cc-agent-messenger pending`, handle each event (reply with
+      `cc-agent-messenger send`), advance the cursor with
+      `cc-agent-messenger ack <correlation_id>`, then re-arm the Monitor.
+
+**⑤ Stop** — detach the Monitor without ending the session:
+
+      Stop the cc-agent-messenger Monitor (kill the background tail). I'll ask you to
+      re-arm it later.
 
 ## 8. End-to-end test
 
