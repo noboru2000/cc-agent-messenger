@@ -6,6 +6,37 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-22
+
+Documentation pass: corrects the stale README that shipped in 0.5.1, brings the
+Japanese docs to parity, and fixes cross-references. No behavior change.
+
+### Changed
+- **README CLI list now lists every subcommand** — `restart`, `watch`, `keepalive`,
+  and `commands` were missing from the `cc-agent-messenger <…>` line that shipped in
+  0.5.1 (the PyPI long description is frozen per release, so it could only be fixed in
+  a new version). Both READMEs now match `build_parser()`.
+- **Live-session copy-paste prompts are scenario-based** (SETUP §7): a "when this
+  happens → paste ①–⑤" table maps first-run / upgrade / dead-Monitor / catch-up /
+  stop to the right prompt, so it is clear which to use when.
+- **Japanese docs naturalized** — `SETUP.ja.md`, and the JA Commands sections of
+  `README.ja.md` / `USAGE.ja.md`, were rewritten for fluency; terminology is
+  standardized (**再起動** = restart the daemon, **再接続** = reconnect the Monitor).
+  `README.ja` Commands now mirrors the English README (Ask/act, Pause, Away &
+  keep-alive, Scheduled monitors).
+
+### Fixed
+- **Stale doc cross-references:** README §11 → **§7** (Copy-paste prompts);
+  USAGE §2.4 → **§3** (the optional-slash note); SETUP §11 step 4 now points to the
+  **② Apply the update** prompt for the upgrade flow (was the re-arm / ③ prompt).
+- **Japanese pages now link to Japanese docs:** `USAGE.ja.md` → `SETUP.ja.md` and
+  `SETUP.ja.md` → `USAGE.ja.md` (both pointed at the English originals); replaced
+  leftover slash-command examples (`/status`, `/help`) with the deterministic
+  `!`-prefix commands.
+- **`init` upgrade hint + CLI docstring were stale:** the printed hint now says
+  `cc-agent-messenger restart` and to paste the "② Apply the update" prompt (no
+  window reload); the module docstring lists all 16 subcommands. (`cli.py`)
+
 ## [0.5.1] - 2026-06-22
 
 ### Fixed
@@ -207,7 +238,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...v0.4.0

@@ -1,6 +1,6 @@
 [project]
 name = "cc-agent-messenger"
-version = "0.5.1"
+version = "0.5.2"
 description = "Slack message-turn bridge to AI coding agents (Claude Code / Codex / Copilot) running on your Mac"
 readme = "README.md"
 requires-python = ">=3.11"
