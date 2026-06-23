@@ -32,10 +32,6 @@ def _have(binary: str) -> bool:
     return shutil.which(binary) is not None
 
 
-def _copilot_authed() -> bool:
-    return bool(os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
-
-
 @unittest.skipUnless(LIVE, "set CC_LIVE_C1=1 to run the live C1 round-trip against real CLIs")
 class LiveC1RoundTripTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -87,7 +83,7 @@ class LiveC1RoundTripTests(unittest.TestCase):
     def test_codex(self) -> None:
         self._roundtrip(AgentConfig("codex", "c1", "C_CODEX", cli="codex exec", kind="codex"))
 
-    @unittest.skipUnless(_have("copilot") and _copilot_authed(), "copilot CLI/token not available")
+    @unittest.skipUnless(_have("copilot"), "copilot CLI not installed")
     def test_copilot(self) -> None:
         self._roundtrip(AgentConfig("copilot", "c1", "C_COPILOT", cli="copilot", kind="copilot"))
 
