@@ -25,10 +25,10 @@ def _claude_spec(**kw) -> AgentSpec:
 
 
 class BuildClaudeCommandTests(unittest.TestCase):
-    def test_defaults_json_bare_readonly(self) -> None:
+    def test_defaults_json_readonly(self) -> None:
         argv = build_claude_command(_claude_spec())
         self.assertEqual(argv[:4], ["claude", "-p", "--output-format", "json"])
-        self.assertIn("--bare", argv)
+        self.assertNotIn("--bare", argv)  # regression: --bare breaks claude 2.1.x ("Not logged in")
         self.assertIn("--permission-mode", argv)
         self.assertIn("dontAsk", argv)
         self.assertIn(agentrunner.CLAUDE_READONLY_TOOLS, argv)

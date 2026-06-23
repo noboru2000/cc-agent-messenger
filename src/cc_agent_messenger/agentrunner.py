@@ -77,7 +77,10 @@ def build_claude_command(spec: AgentSpec, *, session_id: str | None = None, read
     if spec.integration != "c1":
         raise ValueError(f"agent {spec.name!r} is not a C1 agent (integration={spec.integration})")
     base = shlex.split(spec.cli) if spec.cli else ["claude", "-p"]
-    argv = [*base, "--output-format", "json", "--bare"]
+    # NB: no `--bare`. On Claude Code 2.1.x `--output-format json --bare` short-circuits
+    # to a bogus `"Not logged in"` result (0 tokens, ~17ms) even when authenticated;
+    # `--output-format json` alone returns the `.result` / `.session_id` we parse.
+    argv = [*base, "--output-format", "json"]
     if read_only and not _has_flag(spec.extra_args, "--permission-mode"):
         # dontAsk denies anything outside --allowedTools without prompting (no hangs).
         argv += ["--permission-mode", "dontAsk", "--allowedTools", CLAUDE_READONLY_TOOLS]

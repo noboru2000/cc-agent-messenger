@@ -34,6 +34,16 @@ semantic versioning.
   Verified empirically against codex-cli 0.136.0, including context carry-over across a
   resumed thread. (`build_codex_command` + `_parse_codex_jsonl`.)
 
+### Fixed
+- **Headless Claude (C1) replied `"Not logged in"` even when authenticated.** The
+  adapter built `claude -p --output-format json --bare`; on Claude Code 2.1.x the
+  `--bare` flag short-circuits the turn to a bogus `"Not logged in · Please run /login"`
+  result (0 tokens, ~17 ms) — so every headless Claude turn failed. Dropped `--bare`
+  (`--output-format json` alone returns the `.result` / `.session_id` the adapter
+  parses). The bug shipped with the original C1 wiring and was caught by a new opt-in
+  live round-trip test (`CC_LIVE_C1=1`) that drives the real CLIs through the daemon's
+  dispatch path. (`build_claude_command`.)
+
 ## [0.5.2] - 2026-06-22
 
 Documentation pass: corrects the stale README that shipped in 0.5.1, brings the
