@@ -11,9 +11,9 @@ import unittest
 from unittest import mock
 
 import _helpers
-from cc_agent_messenger import agentrunner, session
-from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, build_codex_command, build_copilot_command, run_turn
-from cc_agent_messenger.multiagent import infer_kind, load_agents
+from cc_agent_messenger import agentrunner, multiagent, session
+from cc_agent_messenger.agentrunner import AgentSpec, TurnResult, build_claude_command, build_codex_command, build_copilot_command, run_turn
+from cc_agent_messenger.multiagent import AgentConfig, infer_kind, load_agents, run_agent_turn
 
 
 def _proc(stdout: str = "", stderr: str = "", returncode: int = 0):
@@ -319,6 +319,58 @@ class KindInferenceTests(unittest.TestCase):
         agent = load_agents(path)[0]
         self.assertEqual(agent.kind, "claude")
         self.assertEqual(agent.to_spec().kind, "claude")
+
+
+class RunAgentTurnTests(unittest.TestCase):
+    """The daemon's per-turn C1 logic, extracted into multiagent.run_agent_turn."""
+
+    def setUp(self) -> None:
+        self.dir = tempfile.mkdtemp()
+        self.cfg = _helpers.make_config(self.dir)
+
+    def _agent(self, kind: str = "claude", name: str = "a") -> AgentConfig:
+        return AgentConfig(name, "c1", "C", cli=f"{kind} x", kind=kind)
+
+    def test_success_returns_text_and_persists_session(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("hi", session_id="sid-9")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertEqual(out, "hi")
+        self.assertEqual(session.get_session(self.cfg, "a", "t.1"), "sid-9")
+
+    def test_resume_passes_stored_session_id(self) -> None:
+        session.set_session(self.cfg, "a", "t.1", "prev")
+        captured: dict = {}
+
+        def fake(spec, prompt, *, session_id, cwd, timeout):
+            captured["sid"] = session_id
+            return TurnResult("ok", session_id="prev")
+
+        with mock.patch.object(multiagent, "run_turn", side_effect=fake):
+            run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertEqual(captured["sid"], "prev")
+
+    def test_copilot_generates_and_persists_session_when_none(self) -> None:
+        captured: dict = {}
+
+        def fake(spec, prompt, *, session_id, cwd, timeout):
+            captured["sid"] = session_id
+            return TurnResult("ok", session_id=None)  # copilot returns no id
+
+        with mock.patch.object(multiagent, "run_turn", side_effect=fake):
+            run_agent_turn(self.cfg, self._agent(kind="copilot", name="cop"), "q", "t.1")
+        self.assertTrue(captured["sid"])  # a uuid was generated up front
+        self.assertEqual(session.get_session(self.cfg, "cop", "t.1"), captured["sid"])  # and persisted
+
+    def test_error_returns_warning_marker(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("", None, True, "boom")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertIn("⚠️", out)
+        self.assertIn("boom", out)
+
+    def test_empty_text_falls_back_to_placeholder(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("", session_id="s")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertIn("no output", out)
 
 
 class SessionStoreTests(unittest.TestCase):

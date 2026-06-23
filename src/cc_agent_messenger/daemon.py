@@ -108,7 +108,7 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         import os as _os
         import uuid
 
-        from . import agentrunner, egress, session
+        from . import egress
         from .models import InboundEvent, SendRequest
         from .profile import match_command
 
@@ -127,17 +127,9 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         )
 
         def run_fn(a: "multiagent.AgentConfig", prompt: str) -> str:
-            spec = a.to_spec()
-            sid = session.get_session(ctx.cfg, a.name, thread_ts)
-            if sid is None and spec.kind == "copilot":
-                sid = str(uuid.uuid4())  # copilot doesn't return a session id; pick one up front
-            result = agentrunner.run_turn(spec, prompt, session_id=sid, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS)
-            token = result.session_id or sid  # claude: captured id; copilot: the uuid we passed
-            if token:
-                session.set_session(ctx.cfg, a.name, thread_ts, token)
-            if result.is_error:
-                return f"⚠️ {a.name}: {result.error or 'the turn failed'}"
-            return result.text or "(the agent returned no output)"
+            return multiagent.run_agent_turn(
+                ctx.cfg, a, prompt, thread_ts, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS
+            )
 
         def send_fn(*, text: str, channel_id: str, thread_ts: str | None) -> None:
             egress.handle_send(SendRequest(text=text, thread_ts=thread_ts, channel_id=channel_id, correlation_id=cid), ctx)

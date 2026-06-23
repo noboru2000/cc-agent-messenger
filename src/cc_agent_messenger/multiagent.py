@@ -14,10 +14,13 @@ live Slack/daemon or a subprocess. The daemon supplies the real ones.
 from __future__ import annotations
 
 import tomllib
+import uuid
 from dataclasses import dataclass
 from typing import Callable
 
-from .agentrunner import AgentSpec
+from . import session
+from .agentrunner import AgentSpec, run_turn
+from .config import Config
 from .router import Router
 
 
@@ -74,6 +77,37 @@ def load_agents(path: str) -> list[AgentConfig]:
 
 def build_router(agents: list[AgentConfig]) -> Router:
     return Router(list(agents))
+
+
+def run_agent_turn(
+    cfg: Config,
+    agent: AgentConfig,
+    prompt: str,
+    thread_ts: str | None,
+    *,
+    cwd: str | None = None,
+    timeout: float = 120.0,
+) -> str:
+    """Execute one C1 turn for ``agent`` and return the reply text (or a ``⚠️`` error
+    marker). Resumes the thread's stored session, runs the CLI via
+    :func:`agentrunner.run_turn`, and persists the (new) session id.
+
+    This is the exact per-turn logic the daemon worker runs — factored out so it is
+    unit-testable and reusable by the local round-trip harness (the only Slack-specific
+    part, posting the reply, stays in the caller's ``send_fn``).
+    """
+
+    spec = agent.to_spec()
+    sid = session.get_session(cfg, agent.name, thread_ts)
+    if sid is None and spec.kind == "copilot":
+        sid = str(uuid.uuid4())  # copilot doesn't return a session id; pick one up front
+    result = run_turn(spec, prompt, session_id=sid, cwd=cwd, timeout=timeout)
+    token = result.session_id or sid  # claude/codex: captured id; copilot: the uuid we passed
+    if token:
+        session.set_session(cfg, agent.name, thread_ts, token)
+    if result.is_error:
+        return f"⚠️ {agent.name}: {result.error or 'the turn failed'}"
+    return result.text or "(the agent returned no output)"
 
 
 def dispatch_inbound(
