@@ -26,6 +26,75 @@ semantic versioning.
   via `COPILOT_GITHUB_TOKEN` / `GH_TOKEN`. Verified empirically against Copilot CLI
   1.0.63. (`build_copilot_command`.)
 
+## [0.5.2] - 2026-06-22
+
+Documentation pass: corrects the stale README that shipped in 0.5.1, brings the
+Japanese docs to parity, and fixes cross-references. No behavior change.
+
+### Changed
+- **README CLI list now lists every subcommand** — `restart`, `watch`, `keepalive`,
+  and `commands` were missing from the `cc-agent-messenger <…>` line that shipped in
+  0.5.1 (the PyPI long description is frozen per release, so it could only be fixed in
+  a new version). Both READMEs now match `build_parser()`.
+- **Live-session copy-paste prompts are scenario-based** (SETUP §7): a "when this
+  happens → paste ①–⑤" table maps first-run / upgrade / dead-Monitor / catch-up /
+  stop to the right prompt, so it is clear which to use when.
+- **Japanese docs naturalized** — `SETUP.ja.md`, and the JA Commands sections of
+  `README.ja.md` / `USAGE.ja.md`, were rewritten for fluency; terminology is
+  standardized (**再起動** = restart the daemon, **再接続** = reconnect the Monitor).
+  `README.ja` Commands now mirrors the English README (Ask/act, Pause, Away &
+  keep-alive, Scheduled monitors).
+
+### Fixed
+- **Stale doc cross-references:** README §11 → **§7** (Copy-paste prompts);
+  USAGE §2.4 → **§3** (the optional-slash note); SETUP §11 step 4 now points to the
+  **② Apply the update** prompt for the upgrade flow (was the re-arm / ③ prompt).
+- **Japanese pages now link to Japanese docs:** `USAGE.ja.md` → `SETUP.ja.md` and
+  `SETUP.ja.md` → `USAGE.ja.md` (both pointed at the English originals); replaced
+  leftover slash-command examples (`/status`, `/help`) with the deterministic
+  `!`-prefix commands.
+- **`init` upgrade hint + CLI docstring were stale:** the printed hint now says
+  `cc-agent-messenger restart` and to paste the "② Apply the update" prompt (no
+  window reload); the module docstring lists all 16 subcommands. (`cli.py`)
+
+## [0.5.1] - 2026-06-22
+
+### Fixed
+- **Slack messages get a reply again.** The live session arms a Monitor with
+  `tail -n 0 -F <inbound_event_path>`, but if the event file did not exist yet (it
+  was created lazily on the first event) a plain `tail -f` died immediately ("No such
+  file or directory") on macOS — so the Monitor never watched and the agent never
+  replied (only the daemon's 👀 receipt appeared). The daemon now creates the ingress
+  dir + an empty event file on startup (`ingress.ensure_event_file`), and the skill
+  uses `tail -F` (retry if missing/rotated). The bug predates v0.5.0 but v0.5.0's move
+  of the ingress file under `.cc-agent-messenger/tmp/` made it reliably reproducible.
+  After upgrading, **restart the daemon** (`cc-agent-messenger restart`) and re-arm
+  the live session in place — a VS Code window reload is no longer required.
+  (`daemon.run`, `ingress.ensure_event_file`, `SKILL.md`)
+- **`!keepalive` / `!watch` (and the full command set) are reachable and discoverable
+  from every surface.** They were only registerable via Slack ingest and were absent
+  from `cc-agent-messenger --help`, the `!help` reply, and the CLI — so neither the
+  owner nor the live agent could find or drive them (the agent reinvented its own
+  loop). Now: new **`cc-agent-messenger watch` / `keepalive`** CLI register on the
+  **same running-daemon scheduler** as Slack (parity; killswitch-gated; `watch list`
+  / `keepalive` show live state); **`!help` is answered directly by the daemon** with
+  the authoritative, complete list (instant, not the agent's improvisation); and
+  **`cc-agent-messenger commands [--all]`** lists the whole command set. A per-command
+  `route` (daemon / agent / both) now drives this in one place.
+  (`commands.route`, `sendapi`, `ingress`, `cli`, `heartbeat.summary`, `SKILL.md`, USAGE)
+
+### Added
+- **`cc-agent-messenger restart`** — stop a running daemon and start a fresh one
+  (= `stop` + `daemon`); startup recreates the ingress file so the live Monitor can
+  reattach. Enables a **no-reload upgrade**: `uv tool upgrade … && init && restart`,
+  then re-arm the live session in place (no "Developer: Reload Window", history kept).
+- **Docs: copy-paste prompts for the live session** (SETUP §7) — re-arm the Monitor,
+  apply an update, catch up on missed messages, stop watching — plus a no-reload
+  upgrade flow (SETUP §11).
+- **Docs: Japanese setup guide** — `docs/SETUP.ja.md` (full translation of
+  `docs/SETUP.md`); SETUP.md is now English-only with an `English | 日本語` switcher,
+  and README.ja links point to the Japanese guide.
+
 ## [0.5.0] - 2026-06-22
 
 ### Changed
@@ -189,7 +258,9 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.2.0...v0.3.0

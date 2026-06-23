@@ -15,10 +15,10 @@ import os
 import re
 import uuid
 
-from . import authz, killswitch
+from . import authz, commands, killswitch
 from .audit import now_utc_iso, truncate_summary, write_entry
 from .context import AppContext
-from .models import AuditEntry, CommandMatch, InboundEvent
+from .models import AuditEntry, CommandMatch, InboundEvent, SendRequest
 from .profile import match_command
 
 _MENTION_RE = re.compile(r"<@[^>]+>")
@@ -74,6 +74,22 @@ def append_line(path: str, line: str) -> None:
         handle.write(line + "\n")
 
 
+def ensure_event_file(path: str) -> None:
+    """Create the ingress dir + an empty event file so the live session's
+    ``tail -F``/``-f`` always has a target.
+
+    Otherwise the file is created lazily on the first event, and a ``tail -f`` armed
+    before then dies immediately ("No such file or directory") — so the live session
+    never sees any message. The daemon calls this on startup.
+    """
+
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    if not os.path.exists(path):
+        open(path, "a", encoding="utf-8").close()
+
+
 def _append_event(ev: InboundEvent, path: str) -> None:
     append_line(path, event_to_line(ev))
 
@@ -102,6 +118,36 @@ def _audit_inbound(ctx: AppContext, *, channel_id: str, thread_ts: str, trigger:
 audit_inbound = _audit_inbound
 
 
+def _daemon_reply_text(ctx: AppContext, trigger: str | None) -> str:
+    """Reply content for a daemon-answered (route='daemon') command — authoritative,
+    not the agent's improvisation. Currently: the full command list for ``help``."""
+
+    if trigger == "help":
+        prefix = getattr(ctx.profile, "command_prefix", "!") or "!"
+        return commands.help_text(lang="ja", prefix=prefix)
+    return ""
+
+
+def _answer_daemon(ctx: AppContext, *, channel_id: str, ts: str, thread_ts: str, trigger: str | None) -> None:
+    """Answer a route='daemon' command directly (no agent forward), keeping 👀→✅.
+
+    The daemon owns the content (e.g. ``help_text()``) so it is instant and always
+    complete — fixes `!help` being incomplete/late when the busy agent improvised it."""
+
+    import uuid
+
+    from . import egress, receipts
+
+    text = _daemon_reply_text(ctx, trigger)
+    if not text:
+        return None  # no daemon content → nothing to answer
+    cid = uuid.uuid4().hex
+    receipts.on_receipt(ctx, channel_id, ts, cid)  # 👀
+    _audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=trigger, outcome="answered", summary=text, correlation_id=cid)
+    egress.handle_send(SendRequest(text=text, thread_ts=thread_ts or None, channel_id=channel_id, correlation_id=cid), ctx)
+    return None
+
+
 def _ingest(
     ctx: AppContext,
     *,
@@ -122,6 +168,9 @@ def _ingest(
     if not authz.is_authorized(user_id, channel_id, ctx.cfg):
         _audit_inbound(ctx, channel_id=channel_id, thread_ts=thread_ts, trigger=trigger, outcome="ignored", summary="unauthorized", correlation_id=None)
         return None
+
+    if commands.route_for(trigger) == "daemon":  # e.g. !help — daemon answers, not forwarded
+        return _answer_daemon(ctx, channel_id=channel_id, ts=ts, thread_ts=thread_ts, trigger=trigger)
 
     ev = InboundEvent(
         v=1,

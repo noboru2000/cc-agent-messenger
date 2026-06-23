@@ -26,6 +26,11 @@ class Command:
     desc_en: str = ""
     takes_index: bool = False
     cls: str = "read-only"  # read-only | safe | nn5-gated
+    # Who handles an ingested command (HLD §4 route policy):
+    #   "agent"  — forward to the live session (needs work knowledge / agent behavior)
+    #   "daemon" — the daemon answers directly, not forwarded (static, e.g. help)
+    #   "both"   — daemon applies scheduler state AND the agent is notified (watch/keepalive/away/back)
+    route: str = "agent"
     # Which control planes expose this command (OPERATIONS.md §7). All current
     # commands are agent-control, reachable from Slack and the local agent window;
     # lifecycle commands live in the CLI, not this registry.
@@ -33,7 +38,7 @@ class Command:
 
 
 REGISTRY: list[Command] = [
-    Command("help", ["/help", "/?"], ["ヘルプ", "コマンド"], ["help", "commands"], "使えるコマンド一覧", "List available commands"),
+    Command("help", ["/help", "/?"], ["ヘルプ", "コマンド"], ["help", "commands"], "使えるコマンド一覧", "List available commands", route="daemon"),
     Command("health_check", ["/health"], ["生きてますか", "生きてる"], ["alive", "ping"], "生存確認", "Liveness check"),
     Command("explain_status", ["/status"], ["状況", "状態"], ["status"], "最新の状況を報告", "Report the latest status"),
     Command("report_results", ["/results"], ["結果"], ["results"], "結果が出ていれば報告", "Report results if any"),
@@ -42,10 +47,10 @@ REGISTRY: list[Command] = [
     Command("select_option", ["/select"], ["選択", "番"], ["select"], "選択肢を選ぶ", "Pick an offered option", takes_index=True, cls="safe"),
     Command("pause_hold", ["/pause"], ["一旦停止", "止めて", "停止"], ["pause", "hold", "stop"], "作業を一旦停止して待機(チャネルは維持)", "Pause work and wait (channel stays open)", cls="safe"),
     Command("continue", ["/continue", "/resume"], ["継続", "続行"], ["continue", "resume"], "監視ループ再開", "Resume the monitoring loop", cls="safe"),
-    Command("away", ["/away"], ["離席"], ["away"], "離席モード(最低報告間隔ごとに生存+進捗、判断はSlackで確認)", "Away mode: min-report heartbeat; ask via Slack for decisions", cls="safe"),
-    Command("back", ["/back"], ["戻った", "復帰"], ["back"], "離席モード解除", "Exit away mode", cls="safe"),
-    Command("keepalive", ["/keepalive"], ["生存確認"], ["keepalive"], "生存ハートビートの切替(MR:Nm / off)", "Toggle the keep-alive heartbeat (MR:Nm / off)", cls="safe"),
-    Command("watch", ["/watch"], ["監視"], ["watch"], "定期監視の設定(list / <id> every:Nm \"内容\" / <id> off)", "Scheduled monitors (list / <id> every:Nm \"items\" / <id> off)", cls="safe"),
+    Command("away", ["/away"], ["離席"], ["away"], "離席モード(最低報告間隔ごとに生存+進捗、判断はSlackで確認)", "Away mode: min-report heartbeat; ask via Slack for decisions", cls="safe", route="both"),
+    Command("back", ["/back"], ["戻った", "復帰"], ["back"], "離席モード解除", "Exit away mode", cls="safe", route="both"),
+    Command("keepalive", ["/keepalive"], ["生存確認"], ["keepalive"], "生存ハートビートの切替(MR:Nm \"内容\" / off)", "Toggle the keep-alive heartbeat (MR:Nm \"items\" / off)", cls="safe", route="both"),
+    Command("watch", ["/watch"], ["監視"], ["watch"], "定期監視の設定(list / <id> every:Nm \"内容\" / <id> off)", "Scheduled monitors (list / <id> every:Nm \"items\" / <id> off)", cls="safe", route="both"),
     Command("system_doctor", ["/doctor"], ["診断"], ["doctor"], "システム診断", "System diagnostics"),
 ]
 
@@ -54,6 +59,15 @@ _BY_ID = {c.id: c for c in REGISTRY}
 
 def by_id(command_id: str) -> Command | None:
     return _BY_ID.get(command_id)
+
+
+def route_for(trigger: str | None) -> str:
+    """Where an ingested ``trigger`` is handled: 'daemon' | 'agent' | 'both'.
+
+    Unknown / free-text (None) defaults to 'agent' (forward to the live session)."""
+
+    cmd = _BY_ID.get(trigger or "")
+    return cmd.route if cmd else "agent"
 
 
 def by_slash(slash: str) -> Command | None:

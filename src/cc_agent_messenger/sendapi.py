@@ -15,6 +15,7 @@ import socket
 import stat
 import threading
 
+from . import heartbeat, killswitch, monitors
 from .context import AppContext
 from .egress import handle_ping, handle_send
 from .models import SendRequest
@@ -43,7 +44,51 @@ def dispatch(request: dict[str, object], ctx: AppContext) -> dict[str, object]:
             channel_id=request.get("channel_id") or None,  # type: ignore[arg-type]
         )
         return handle_send(req, ctx).to_wire()
+    if op == "watch":
+        return _handle_watch(request, ctx)
+    if op == "keepalive":
+        return _handle_keepalive(request, ctx)
     return {"v": 1, "status": "failed", "reason": f"bad_request: unknown op {op!r}"}
+
+
+def _handle_watch(request: dict[str, object], ctx: AppContext) -> dict[str, object]:
+    """Register/list/toggle a monitor on the running daemon (parity with Slack !watch).
+
+    Reuses ``monitors.apply_watch`` on the live scheduler, so CLI and Slack converge.
+    Refused while the kill switch is engaged (the Slack path drops it too)."""
+
+    import time
+
+    if killswitch.is_engaged(ctx.cfg.kill_switch_path):
+        return {"v": 1, "status": "halted", "reason": "kill switch engaged"}
+    sched = getattr(ctx, "monitors", None)
+    if sched is None:
+        return {"v": 1, "status": "failed", "reason": "monitors unavailable"}
+    text = request.get("text")
+    text = text if isinstance(text, str) and text.strip() else "list"
+    summary = monitors.apply_watch(sched, text, time.time())
+    return {"v": 1, "status": "ok", "summary": summary}
+
+
+def _handle_keepalive(request: dict[str, object], ctx: AppContext) -> dict[str, object]:
+    """Toggle/query the keep-alive heartbeat on the running daemon (parity with !keepalive).
+
+    Empty / ``status`` text is a read-only query; ``MR:Nm ["items"]`` / ``off`` mutate."""
+
+    import time
+
+    if killswitch.is_engaged(ctx.cfg.kill_switch_path):
+        return {"v": 1, "status": "halted", "reason": "kill switch engaged"}
+    hb = getattr(ctx, "heartbeat", None)
+    if hb is None:
+        return {"v": 1, "status": "failed", "reason": "heartbeat unavailable"}
+    text = request.get("text")
+    text = text if isinstance(text, str) else ""
+    channel = request.get("channel_id") or ctx.cfg.allowed_slack_channel_id
+    if text.strip().lower() in ("", "status"):  # read-only query
+        return {"v": 1, "status": "ok", "summary": hb.summary(str(channel))}
+    state = hb.apply_mode(str(channel), "keepalive", text, time.time())
+    return {"v": 1, "status": "ok", "summary": heartbeat.state_summary(state)}
 
 
 def handle_request_bytes(line: bytes, ctx: AppContext) -> bytes:
