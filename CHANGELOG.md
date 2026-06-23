@@ -16,7 +16,6 @@ semantic versioning.
   so a long turn never blocks ingest. New `session.py` (per-thread resume store under
   `.cc-agent-messenger/`), a per-kind adapter in `agentrunner.py`
   (`build_claude_command` + JSON parsing + `TurnResult`), and `AgentConfig.kind`.
-  (Codex C1 adapter lands next.)
 - **Headless GitHub Copilot agents (C1).** Same harness with `kind = "copilot"`
   (`cli = "copilot"`): clean text via `-s`, per-thread resume via a self-supplied
   `--session-id` UUID (the CLI doesn't print one in `-p` mode), `--no-ask-user` to
@@ -25,6 +24,15 @@ semantic versioning.
   hanging on approval; opt into edits with `extra_args = ["--allow-all-tools"]`. Auth
   via `COPILOT_GITHUB_TOKEN` / `GH_TOKEN`. Verified empirically against Copilot CLI
   1.0.63. (`build_copilot_command`.)
+- **Headless Codex agents (C1).** Same harness with `kind = "codex"`
+  (`cli = "codex exec"`): `codex exec --json` emits JSONL events, so the reply text is
+  read from the `agent_message` items and the resumable session id from the
+  `thread.started` `thread_id`. Per-thread resume is `codex exec resume <thread_id>`,
+  which **inherits the session's sandbox** — so the read-only sandbox (`-s read-only`)
+  and any `extra_args` are applied on the *first* turn only and not replayed on resume
+  (resume rejects `-s`). The prompt is passed via stdin (`-`). Auth via `codex login`.
+  Verified empirically against codex-cli 0.136.0, including context carry-over across a
+  resumed thread. (`build_codex_command` + `_parse_codex_jsonl`.)
 
 ## [0.5.2] - 2026-06-22
 

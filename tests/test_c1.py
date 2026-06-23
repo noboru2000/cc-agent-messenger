@@ -12,7 +12,7 @@ from unittest import mock
 
 import _helpers
 from cc_agent_messenger import agentrunner, session
-from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, build_copilot_command, run_turn
+from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, build_codex_command, build_copilot_command, run_turn
 from cc_agent_messenger.multiagent import infer_kind, load_agents
 
 
@@ -180,11 +180,134 @@ class RunTurnCopilotTests(unittest.TestCase):
         self.assertIn("auth failed", r.error)
 
 
+_CODEX_JSONL = "\n".join(
+    [
+        '{"type":"thread.started","thread_id":"tid-1"}',
+        '{"type":"turn.started"}',
+        '{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"pong"}}',
+        '{"type":"turn.completed","usage":{"input_tokens":1}}',
+    ]
+)
+
+
+class BuildCodexCommandTests(unittest.TestCase):
+    def _spec(self, **kw) -> AgentSpec:
+        return AgentSpec("codex", "c1", "C", cli="codex exec", kind="codex", **kw)
+
+    def test_first_turn_defaults_json_readonly_stdin(self) -> None:
+        argv = build_codex_command(self._spec())
+        self.assertEqual(argv[:2], ["codex", "exec"])
+        self.assertIn("--json", argv)
+        self.assertIn("--skip-git-repo-check", argv)
+        self.assertEqual(argv[argv.index("-s") + 1], "read-only")
+        self.assertEqual(argv[-1], "-")  # prompt comes via stdin
+        self.assertNotIn("resume", argv)
+
+    def test_resume_uses_resume_subcommand_without_sandbox(self) -> None:
+        argv = build_codex_command(self._spec(), session_id="tid-1")
+        self.assertEqual(argv[:3], ["codex", "exec", "resume"])
+        self.assertEqual(argv[3], "tid-1")
+        self.assertNotIn("-s", argv)  # resume inherits the session sandbox; -s is rejected
+        self.assertNotIn("read-only", argv)
+        self.assertEqual(argv[-1], "-")
+
+    def test_extra_args_sandbox_overrides_readonly_default(self) -> None:
+        argv = build_codex_command(self._spec(extra_args=("-s", "workspace-write")))
+        self.assertEqual(argv.count("-s"), 1)  # our read-only default is not added
+        self.assertIn("workspace-write", argv)
+        self.assertNotIn("read-only", argv)
+
+    def test_resume_does_not_replay_extra_args(self) -> None:
+        argv = build_codex_command(self._spec(extra_args=("-s", "workspace-write")), session_id="tid-1")
+        self.assertNotIn("-s", argv)
+        self.assertNotIn("workspace-write", argv)
+
+    def test_c0_agent_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            build_codex_command(AgentSpec("codex", "c0", "C", kind="codex"))
+
+
+class ParseCodexJsonlTests(unittest.TestCase):
+    def test_extracts_text_and_thread_id(self) -> None:
+        text, sid = agentrunner._parse_codex_jsonl(_CODEX_JSONL)
+        self.assertEqual(text, "pong")
+        self.assertEqual(sid, "tid-1")
+
+    def test_joins_multiple_agent_messages(self) -> None:
+        jsonl = "\n".join(
+            [
+                '{"type":"thread.started","thread_id":"t"}',
+                '{"type":"item.completed","item":{"type":"agent_message","text":"a"}}',
+                '{"type":"item.completed","item":{"type":"agent_message","text":"b"}}',
+            ]
+        )
+        text, sid = agentrunner._parse_codex_jsonl(jsonl)
+        self.assertEqual(text, "a\nb")
+        self.assertEqual(sid, "t")
+
+    def test_thread_started_only_yields_empty_text(self) -> None:
+        text, sid = agentrunner._parse_codex_jsonl('{"type":"thread.started","thread_id":"t"}')
+        self.assertEqual(text, "")
+        self.assertEqual(sid, "t")
+
+    def test_no_json_returns_none(self) -> None:
+        self.assertIsNone(agentrunner._parse_codex_jsonl("error: not logged in\n"))
+
+
+class RunTurnCodexTests(unittest.TestCase):
+    def _spec(self) -> AgentSpec:
+        return AgentSpec("codex", "c1", "C", cli="codex exec", kind="codex")
+
+    def test_success_extracts_text_and_session(self) -> None:
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stdout=_CODEX_JSONL)):
+            r = run_turn(self._spec(), "hi")
+        self.assertFalse(r.is_error)
+        self.assertEqual(r.text, "pong")
+        self.assertEqual(r.session_id, "tid-1")
+
+    def test_prompt_goes_via_stdin_not_argv(self) -> None:
+        captured: dict = {}
+
+        def fake_run(argv, **kw):
+            captured["argv"], captured["input"] = argv, kw.get("input")
+            return _proc(stdout=_CODEX_JSONL)
+
+        with mock.patch.object(agentrunner.subprocess, "run", side_effect=fake_run):
+            run_turn(self._spec(), "secret prompt")
+        self.assertEqual(captured["input"], "secret prompt")
+        self.assertNotIn("secret prompt", captured["argv"])
+
+    def test_resume_passes_session_id(self) -> None:
+        captured: dict = {}
+
+        def fake_run(argv, **kw):
+            captured["argv"] = argv
+            return _proc(stdout=_CODEX_JSONL)
+
+        with mock.patch.object(agentrunner.subprocess, "run", side_effect=fake_run):
+            run_turn(self._spec(), "q", session_id="tid-1")
+        self.assertIn("resume", captured["argv"])
+        self.assertIn("tid-1", captured["argv"])
+
+    def test_nonzero_exit_no_json_is_error(self) -> None:
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stderr="not logged in", returncode=1)):
+            r = run_turn(self._spec(), "q")
+        self.assertTrue(r.is_error)
+        self.assertIn("not logged in", r.error)
+
+    def test_empty_reply_is_error(self) -> None:
+        out = '{"type":"thread.started","thread_id":"t"}\n{"type":"turn.completed"}'
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stdout=out)):
+            r = run_turn(self._spec(), "q")
+        self.assertTrue(r.is_error)
+        self.assertEqual(r.session_id, "t")  # session still captured for resume
+
+
 class KindInferenceTests(unittest.TestCase):
     def test_infer_kind(self) -> None:
         self.assertEqual(infer_kind("claude -p"), "claude")
         self.assertEqual(infer_kind("copilot -p"), "copilot")
-        self.assertEqual(infer_kind("codex exec"), "generic")
+        self.assertEqual(infer_kind("codex exec"), "codex")
         self.assertEqual(infer_kind(None), "generic")
 
     def test_load_agents_infers_kind_and_to_spec_carries_it(self) -> None:

@@ -308,6 +308,13 @@ resumable session. The default is read-only (file writes are **denied** so a wri
 request is refused rather than executed); add `extra_args = ["--allow-all-tools"]` to
 let it edit (use a private repo).
 
+**Codex** works the same way (`kind = "codex"`, `cli = "codex exec"`): install
+`npm i -g @openai/codex` and authenticate via `codex login`, then give it a dedicated
+channel. The daemon runs `codex exec --json` and resumes each Slack thread with
+`codex exec resume <id>`. The default sandbox is **read-only** (set on the first turn;
+resume inherits it); add `extra_args = ["-s", "workspace-write"]` to let it edit in the
+workspace (use a private repo).
+
 ## 10. Kill switch & audit
 
     cc-agent-messenger kill on     # halt all inbound/outbound

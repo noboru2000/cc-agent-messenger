@@ -29,7 +29,7 @@ class AgentConfig:
     ingress_path: str | None = None  # C0: file watched by that agent's live session
     cli: str | None = None  # C1: base headless command, e.g. "codex exec"
     extra_args: tuple[str, ...] = ()  # C1: sandbox/approval flags (NN5)
-    kind: str = "generic"  # C1 adapter: "claude" | "copilot" | "generic"
+    kind: str = "generic"  # C1 adapter: "claude" | "copilot" | "codex" | "generic"
 
     def to_spec(self) -> AgentSpec:
         return AgentSpec(self.name, self.integration, self.channel_id, self.cli, self.extra_args, self.kind)
@@ -45,6 +45,8 @@ def infer_kind(cli: str | None) -> str:
         return "claude"
     if head == "copilot":
         return "copilot"
+    if head == "codex":
+        return "codex"
     return "generic"
 
 
