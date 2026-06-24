@@ -136,7 +136,9 @@ class SlackEgress:
 
         from slack_sdk import WebClient
 
+        # `apps.connections.open` requires the app-level token as an explicit kwarg
+        # (slack_sdk does not reuse the WebClient's bearer token for this method).
         client = WebClient(token=self._cfg.slack_app_token)
-        resp = client.apps_connections_open()
+        resp = client.apps_connections_open(app_token=self._cfg.slack_app_token)
         ok = bool(resp.data.get("ok")) if isinstance(resp.data, dict) else False
         return ok, "Socket Mode connection mint ok"

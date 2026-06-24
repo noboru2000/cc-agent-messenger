@@ -35,6 +35,12 @@ semantic versioning.
   resumed thread. (`build_codex_command` + `_parse_codex_jsonl`.)
 
 ### Fixed
+- **`doctor --slack` crashed on the Socket Mode check** with
+  `apps_connections_open() missing 1 required keyword-only argument: 'app_token'`.
+  Current `slack_sdk` does not reuse the `WebClient` bearer token for
+  `apps.connections.open`; pass the app-level token as the explicit `app_token`
+  kwarg. The probe now mints a Socket Mode connection and reports `[PASS]` again.
+  (`slackclient.socket_mode_reachable`.)
 - **Headless Claude (C1) replied `"Not logged in"` even when authenticated.** The
   adapter built `claude -p --output-format json --bare`; on Claude Code 2.1.x the
   `--bare` flag short-circuits the turn to a bogus `"Not logged in · Please run /login"`
