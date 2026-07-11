@@ -22,6 +22,11 @@ If `display_name` is absent or empty, the effective display name is `name`.
 Changing `display_name` must not change routing, audit/session keys, or the stored
 C1 resume session. Agent names should therefore remain stable and unique.
 
+The Slack App's display/mention name is a separate workspace-level setting. For
+example, an owner may mention `@MacMessenger` while that App posts a routed reply
+whose author label is `ULBC Claude`. Configured authorship does not create another
+Slack user, change invitations, or change the mention token in inbound events.
+
 ## Resolution and trust boundary
 
 The egress chokepoint resolves the effective name from the authorized destination:
@@ -46,6 +51,10 @@ required `doctor --slack` scope in v0.7. Missing scope is a preflight failure; a
 post rejected by Slack follows the existing audited `STATUS_FAILED` path. The app
 does not silently fall back to its global Slack display name because that would
 make per-repository attribution unreliable.
+
+Slack reference: [`chat.postMessage`](https://docs.slack.dev/reference/methods/chat.postMessage/)
+documents the `username` argument; [`chat:write.customize`](https://docs.slack.dev/reference/scopes/chat.write.customize/)
+is the required Bot Token Scope.
 
 ## Upgrade and `init`
 

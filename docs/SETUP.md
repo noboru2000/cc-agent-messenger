@@ -346,6 +346,20 @@ uses on its own to tell you e.g. "実験が完了しました" when a long job f
 
 ### Set repository/agent sender names
 
+Four related names are intentionally separate:
+
+| Name | Example | Controls |
+| --- | --- | --- |
+| Slack App / mention name | `@MacMessenger`, `@Messenger` | How the owner invites and mentions the app; configured in Slack |
+| `default_agent` | `MacMessenger`, `Messenger` | Slack author shown for the default, un-routed C0 channel |
+| `[[agent]].name` | `claude-headless` | Stable internal routing and C1 resume-session key |
+| `[[agent]].display_name` | `ULBC Claude` | Slack author shown for that routed C0/C1 channel |
+
+Changing `display_name` does **not** rename the Slack App and does not change what
+you type after `@`; it changes the author label on messages posted by the app.
+Conversely, changing the App's display/mention name in Slack does not rewrite this
+repository's config.
+
 The default C0 channel uses `default_agent` as its Slack-visible sender name:
 
     default_agent = "ULBC Mac"
@@ -361,6 +375,56 @@ When `display_name` is omitted, Slack uses `name`. Renaming `display_name` does 
 reset a C1 thread; avoid renaming `name`, which is also the session key. These
 names are trusted local config only and cannot be overridden from Slack text or
 the send CLI. After changing them, restart the daemon.
+
+Example: one Mac C0 app plus an rtxu C0/C1 app:
+
+```toml
+# Mac repository: default C0 posts as "MacMessenger"
+default_agent = "MacMessenger"
+```
+
+```toml
+# rtxu repository: default C0 posts as "Messenger"
+default_agent = "Messenger"
+
+[[agent]]
+name = "claude-headless"
+display_name = "ULBC Claude"
+integration = "c1"
+kind = "claude"
+channel_id = "C…"
+cli = "claude -p"
+
+[[agent]]
+name = "copilot-headless"
+display_name = "ULBC Copilot"
+integration = "c1"
+kind = "copilot"
+channel_id = "C…"
+cli = "copilot"
+
+[[agent]]
+name = "codex-headless"
+display_name = "ULBC Codex"
+integration = "c1"
+kind = "codex"
+channel_id = "C…"
+cli = "codex exec"
+```
+
+Before enabling configured names:
+
+1. Add `chat:write.customize` under **OAuth & Permissions → Bot Token Scopes**.
+2. Reinstall the Slack App to the workspace.
+3. If Slack presents a new `xoxb-…` token, update the local `config.toml`.
+4. Run `cc-agent-messenger doctor --slack`; all required scopes must pass.
+5. Restart the daemon, then send one C0 and one C1 test reply and verify the
+   author labels. Existing Slack messages keep their old label.
+
+`cc-agent-messenger init` is deliberately upgrade-safe: on an existing project it
+refreshes the packaged skill but **does not overwrite `config.toml`**. Add or edit
+`default_agent` / `display_name` yourself. A fresh `init` copies the current
+example, while an existing config keeps tokens, paths, routes, and custom names.
 
 - **One channel per agent.** Add `[[agent]]` entries to the config (a dedicated
   channel each); the daemon routes by `channel_id`. Claude uses C0 (live session);
@@ -514,6 +578,16 @@ permissions).
 - **No 👀→✅ receipt** → the bot is missing `reactions:write` (§3.2; reinstall after
   adding it). Confirm the scope with `doctor --slack`, or run `doctor --slack --live`
   to actively post a probe and exercise 👀→✅ end-to-end.
+- **Configured sender name is ignored / Slack shows the App's global name** → the
+  installed token lacks `chat:write.customize`, the App was not reinstalled after
+  adding it, or the daemon still has the old config/token in memory. Run
+  `cc-agent-messenger doctor --slack`, update the `xoxb-…` token if Slack issued a
+  new one, then restart the daemon. In v0.7 the missing scope is a hard FAIL.
+- **Changing `display_name` started a new C1 conversation** → verify that you did
+  not also change `name`. Only `name` keys stored resume sessions; keep it stable.
+- **Mention still says `@MacMessenger` while replies say `ULBC Claude`** → this is
+  expected. The `@` name belongs to the Slack App; `display_name` controls only
+  outbound message authorship.
 - **Hands-free not applying** → a newly created `.claude/settings.json` is not
   picked up mid-session; reload the VS Code window, or choose "always allow" on the
   next prompt. (`/permissions` is CLI-only and not available in the VS Code
