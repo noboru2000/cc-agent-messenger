@@ -6,6 +6,15 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-11
+
+### Added
+- **Repository/agent-specific Slack sender names.** The default C0 channel posts
+  as `default_agent`; routed C0/C1 agents accept an optional `display_name` that
+  falls back to stable `name`. Slack text and send-API callers cannot override
+  authorship. `chat:write.customize` is now a required doctor check, while
+  upgrade-safe `init` preserves existing config and custom display names.
+
 ## [0.6.0] - 2026-07-11
 
 ### Added
@@ -300,7 +309,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...v0.5.1

@@ -50,10 +50,15 @@ class SlackEgress:
         text: str,
         thread_ts: str | None,
         options: list[str] | None = None,
+        display_name: str | None = None,
     ) -> str:
         """Post a message and return its Slack timestamp (``ts``)."""
 
-        kwargs: dict[str, object] = {"channel": channel_id, "text": text}
+        kwargs: dict[str, object] = {
+            "channel": channel_id,
+            "text": text,
+            "username": display_name or self._cfg.default_agent,
+        }
         if thread_ts:
             kwargs["thread_ts"] = thread_ts
         if options:

@@ -19,7 +19,7 @@ from .config import Config
 # basic function (a miss fails the run); the rest are surfaced as recommendations
 # so e.g. a missing ``reactions:write`` (no 👀→✅ receipts) is *visible* without
 # failing an otherwise-working bot.
-_CORE_SCOPES = ("chat:write", "app_mentions:read", "groups:history")
+_CORE_SCOPES = ("chat:write", "chat:write.customize", "app_mentions:read", "groups:history")
 _RECOMMENDED_SCOPES = ("groups:read", "reactions:read", "reactions:write", "commands")
 _SCOPE_NOTE = {
     "reactions:write": "👀→✅ receipts",

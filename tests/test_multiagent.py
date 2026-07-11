@@ -19,6 +19,7 @@ from cc_agent_messenger.multiagent import (
 _AGENTS_TOML = """
 [[agent]]
 name = "claude"
+display_name = "Project Claude"
 integration = "c0"
 channel_id = "C_CLAUDE"
 ingress_path = "tmp/claude.jsonl"
@@ -45,10 +46,14 @@ class LoadAgentsTests(unittest.TestCase):
         self.assertEqual([a.name for a in agents], ["claude", "codex"])
         claude, codex = agents
         self.assertEqual(claude.integration, "c0")
+        self.assertEqual(claude.display_name, "Project Claude")
+        self.assertEqual(claude.effective_display_name, "Project Claude")
         self.assertEqual(claude.ingress_path, "tmp/claude.jsonl")
         self.assertEqual(codex.integration, "c1")
         self.assertEqual(codex.cli, "codex exec")
         self.assertEqual(codex.extra_args, ("-c", "sandbox_permissions=[]"))
+        self.assertIsNone(codex.display_name)
+        self.assertEqual(codex.effective_display_name, "codex")
 
     def test_no_agents(self) -> None:
         self.assertEqual(load_agents(self._write("# nothing\n")), [])
@@ -109,10 +114,18 @@ class EgressChannelOverrideTests(unittest.TestCase):
         res = egress.handle_send(SendRequest(text="hi", channel_id="C_CODEX", mention_owner=False), self.ctx)
         self.assertEqual(res.status, "posted")
         self.assertEqual(self.slack.calls[0]["channel_id"], "C_CODEX")
+        self.assertEqual(self.slack.calls[0]["display_name"], "codex")
+
+    def test_agent_display_name_overrides_internal_name(self) -> None:
+        self.ctx.agents = [AgentConfig("codex-session-key", "c1", "C_CODEX", cli="codex exec", display_name="ULBC Codex")]
+        egress.handle_send(SendRequest(text="hi", channel_id="C_CODEX", mention_owner=False), self.ctx)
+        self.assertEqual(self.slack.calls[0]["display_name"], "ULBC Codex")
+        self.assertEqual(self.ctx.agents[0].name, "codex-session-key")
 
     def test_default_channel_when_none(self) -> None:
         egress.handle_send(SendRequest(text="hi", mention_owner=False), self.ctx)
         self.assertEqual(self.slack.calls[0]["channel_id"], "C_PRIVATE")  # cfg.allowed_slack_channel_id
+        self.assertEqual(self.slack.calls[0]["display_name"], self.cfg.default_agent)
 
     def test_unknown_channel_unauthorized(self) -> None:
         res = egress.handle_send(SendRequest(text="hi", channel_id="C_OTHER"), self.ctx)

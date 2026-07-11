@@ -43,6 +43,7 @@ class EgressTests(unittest.TestCase):
         self.assertEqual(call["channel_id"], "C_PRIVATE")
         self.assertEqual(call["thread_ts"], "100.1")
         self.assertTrue(str(call["text"]).startswith("<@U_OWNER> "))
+        self.assertEqual(call["display_name"], "claude")
 
     def test_no_mention(self) -> None:
         handle_send(SendRequest(text="x", mention_owner=False), self.ctx)
@@ -56,11 +57,13 @@ class EgressTests(unittest.TestCase):
         self.assertEqual(result.status, "posted")
         self.assertEqual(len(self.slack.calls), 4)
         self.assertEqual(len(result.message_ts), 4)
+        self.assertEqual({call["display_name"] for call in self.slack.calls}, {"claude"})
 
     def test_options_render_buttons_single_post(self) -> None:
         handle_send(SendRequest(text="choose", options=["1: A", "2: B"], mention_owner=False), self.ctx)
         self.assertEqual(len(self.slack.calls), 1)
         self.assertEqual(self.slack.calls[0]["options"], ["1: A", "2: B"])
+        self.assertEqual(self.slack.calls[0]["display_name"], "claude")
 
     def test_failed_on_slack_error(self) -> None:
         ctx = _helpers.make_ctx(self.cfg, _helpers.FakeSlack(raise_exc=RuntimeError("boom")))

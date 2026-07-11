@@ -42,15 +42,15 @@ class FakeSlack:
         self._live = live
         # Capability-probe defaults: a healthy, fully-scoped bot.
         self._scopes = list(scopes) if scopes is not None else [
-            "chat:write", "app_mentions:read", "groups:history",
+            "chat:write", "chat:write.customize", "app_mentions:read", "groups:history",
             "groups:read", "reactions:read", "reactions:write", "commands",
         ]
         self._identity = identity or {"user": "testbot", "user_id": "U_BOT", "team": "T_TEST", "url": "https://example.test"}
         self._is_member = is_member
         self._socket_ok = socket_ok
 
-    def post(self, channel_id: str, text: str, thread_ts: str | None, options: list[str] | None = None) -> str:
-        self.calls.append({"channel_id": channel_id, "text": text, "thread_ts": thread_ts, "options": options})
+    def post(self, channel_id: str, text: str, thread_ts: str | None, options: list[str] | None = None, display_name: str | None = None) -> str:
+        self.calls.append({"channel_id": channel_id, "text": text, "thread_ts": thread_ts, "options": options, "display_name": display_name})
         if self._raise is not None:
             raise self._raise
         return next(self._ts)
