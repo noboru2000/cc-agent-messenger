@@ -1,14 +1,17 @@
 ---
 name: cc-agent-messenger
-description: Watch the Slack ingress file and reply to the owner's Slack commands through the resident bot (C0 monitor mode). Use when the owner keeps VS Code open while working/monitoring and wants the live session to respond to iPhone Slack messages from away the desk.
+description: Watch the Slack ingress file and reply to the owner's Slack commands through the resident bot (C0 monitor mode). Use when the owner keeps an interactive Claude Code session open in VS Code or the claude CLI while working/monitoring and wants that live session to respond to Slack.
 ---
 
 # cc-agent-messenger — live-session operating procedure (C0 monitor mode)
 
 This skill makes the **live Claude Code session** the C0 "agent": it watches the
 Slack ingress file, interprets each owner command, and replies through the
-project's resident bot. Bound to this session (NN13: valid only while VS Code and
-the Mac stay awake and this session is running).
+project's resident bot. The session may be a VS Code Claude Code window or an
+interactive ``claude`` CLI; both are C0 because this same process remains alive
+and preserves working context. Bound to this session (NN13: valid only while the
+host, network, this session, and its Monitor remain running). C1 is different: the
+daemon spawns a headless agent process per Slack turn.
 
 ## Preconditions (check first)
 

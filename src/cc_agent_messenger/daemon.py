@@ -163,9 +163,13 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
 
     @app.event("message")
     def _on_message(event, context, logger) -> None:  # noqa: ANN001
-        # Skip bot-mentioned messages (app_mention handles them), bot-authored
-        # messages, edits, and top-level (non-thread) messages — avoids dupes.
-        if not ingress.should_ingest_message(event, context.get("bot_user_id")):
+        # Bot-user-ID mentions stay on app_mention; Slack mobile can encode the
+        # same top-level mention with the bot ID and emit only `message` (#13).
+        if not ingress.should_ingest_message(
+            event,
+            context.get("bot_user_id"),
+            context.get("bot_id"),
+        ):
             return
         channel_id = event.get("channel", "")
         user_id = event.get("user", "")

@@ -19,13 +19,12 @@ from .config import Config
 # basic function (a miss fails the run); the rest are surfaced as recommendations
 # so e.g. a missing ``reactions:write`` (no 👀→✅ receipts) is *visible* without
 # failing an otherwise-working bot.
-_CORE_SCOPES = ("chat:write", "app_mentions:read")
-_RECOMMENDED_SCOPES = ("groups:history", "groups:read", "reactions:read", "reactions:write", "commands")
+_CORE_SCOPES = ("chat:write", "app_mentions:read", "groups:history")
+_RECOMMENDED_SCOPES = ("groups:read", "reactions:read", "reactions:write", "commands")
 _SCOPE_NOTE = {
     "reactions:write": "👀→✅ receipts",
     "reactions:read": "reaction commands",
     "groups:read": "private channel",
-    "groups:history": "private channel",
     "commands": "native slash",
 }
 
@@ -65,11 +64,12 @@ def _scope_check(scopes: list[str]) -> tuple[str, bool, str]:
 def _slack_ability_checks(cfg: Config, slack) -> list[tuple[str, bool, str]]:  # noqa: ANN001
     """Network capability probes against the *installed* bot (see slackclient).
 
-    Verifies what the bot can actually do — identity, granted scopes, channel
-    membership, app-level token + Socket Mode — so a botched install surfaces
-    here. Each probe degrades to a single FAIL line instead of aborting. The
-    Interactivity & Event-Subscription toggles can't be read with bot/app tokens,
-    so they stay a manual SETUP step (see docs/SETUP.md)."""
+    Verifies what the bot can actually do — identity, granted scopes (including
+    groups:history for message.groups delivery), channel membership, app-level
+    token + Socket Mode — so a botched install surfaces here. Each probe degrades
+    to a single FAIL line instead of aborting. The Interactivity &
+    Event-Subscription toggles can't be read with bot/app tokens, so they stay a
+    manual SETUP step (see docs/SETUP.md)."""
 
     checks: list[tuple[str, bool, str]] = []
     try:

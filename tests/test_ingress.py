@@ -119,14 +119,25 @@ class IngressTests(unittest.TestCase):
 
     def test_should_ingest_message_dedup(self) -> None:
         # thread reply, no bot mention -> ingest
-        self.assertTrue(ingress.should_ingest_message({"thread_ts": "1.1", "text": "継続"}, "U_BOT"))
+        self.assertTrue(ingress.should_ingest_message({"thread_ts": "1.1", "text": "継続"}, "U_BOT", "B_BOT"))
         # bot-mentioned thread reply -> skip (app_mention handles it)
-        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "text": "<@U_BOT> 継続"}, "U_BOT"))
+        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "text": "<@U_BOT> 継続"}, "U_BOT", "B_BOT"))
+        # bot-ID mention in a thread has no app_mention counterpart -> ingest
+        self.assertTrue(ingress.should_ingest_message({"thread_ts": "1.1", "text": "<@B_BOT> 継続"}, "U_BOT", "B_BOT"))
         # top-level (no thread) -> skip
-        self.assertFalse(ingress.should_ingest_message({"text": "継続"}, "U_BOT"))
+        self.assertFalse(ingress.should_ingest_message({"text": "継続"}, "U_BOT", "B_BOT"))
+        # iOS bot-ID mention arrives only as a top-level message -> ingest
+        self.assertTrue(ingress.should_ingest_message({"text": "<@B_BOT> !help"}, "U_BOT", "B_BOT"))
+        # desktop bot-user-ID mention remains owned by app_mention
+        self.assertFalse(ingress.should_ingest_message({"text": "<@U_BOT> !help"}, "U_BOT", "B_BOT"))
+        # a pathological message containing both forms stays on app_mention
+        self.assertFalse(ingress.should_ingest_message({"text": "<@U_BOT> <@B_BOT> !help"}, "U_BOT", "B_BOT"))
+        # missing/wrong authorization metadata fails closed at top level
+        self.assertFalse(ingress.should_ingest_message({"text": "<@B_BOT> !help"}, "U_BOT"))
+        self.assertFalse(ingress.should_ingest_message({"text": "<@B_OTHER> !help"}, "U_BOT", "B_BOT"))
         # bot-authored / edits -> skip
-        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "bot_id": "B1"}, "U_BOT"))
-        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "subtype": "message_changed"}, "U_BOT"))
+        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "bot_id": "B1"}, "U_BOT", "B_BOT"))
+        self.assertFalse(ingress.should_ingest_message({"thread_ts": "1.1", "subtype": "message_changed"}, "U_BOT", "B_BOT"))
 
     def test_strict_unmatched_refused(self) -> None:
         self.cfg = _helpers.make_config(self.dir, inbound_event_path=os.path.join(self.dir, "events.jsonl"), interpretation_mode="strict")

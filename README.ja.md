@@ -11,8 +11,8 @@
 [![CI](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml/badge.svg)](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Mac の VS Code で AI コーディングエージェントが作業を続けている間に、**iPhone の
-Slack** から状況確認・次の選択・完了通知などをやり取りできるツールです。常駐 bot が
+VS Codeまたは対話型CLIでAIコーディングエージェントが作業を続けている間に、**iPhoneの
+Slack**から状況確認・次の選択・完了通知などをやり取りできるツールです。常駐botが
 Slack チャネルと**ライブの Claude Code セッション**(および Codex / Copilot のヘッド
 レス CLI)を橋渡しします。**完結したメッセージ単位**のやり取りで、ターミナルのライブ
 ミラーリングではありません。
@@ -58,7 +58,9 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 ## 何ができるか
 
 - **受信:** プライベートチャネルのメッセージを認可しローカルファイルに追記。`tail -f`
-  で監視中のライブ Claude Code セッションが起床し、コマンドを解釈して返信。
+  で監視中の常駐Claude Codeセッション(VS Codeウィンドウまたは対話型`claude` CLI、C0)が
+  起床し、コマンドを解釈して返信。任意のC1ではdaemonがSlackの1ターンごとにheadless agentを
+  起動します。アップグレードだけでC1が自動的に有効になることはありません。
 - **送信:** 返信は**自前 bot** があなたを `@mention` して投稿 → スマホにプッシュ。
 - **エージェント:** Claude Code は**ライブセッション(C0)**、Codex/Copilot は**ヘッド
   レス CLI(C1)**。Claude も C1 可。
@@ -146,8 +148,8 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## 制限
 
-- **セッション束縛:** ライブ(C0)ブリッジは VS Code と Mac が起きていてスキルの監視が
-  動いている間のみ。24/7 サービスではありません。
+- **セッション束縛:** ライブ(C0)ブリッジは、対話型Claudeセッション、そのホスト、skillの
+  Monitorが動いている間のみ機能します。それ自体は24/7サービスではありません。
 - Copilot/Codex の返信は**ヘッドレス CLI ターン**で、VS Code の GUI パネルとは別文脈です。
 
 ## ドキュメント

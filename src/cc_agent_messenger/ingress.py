@@ -253,22 +253,30 @@ def handle_action(channel_id: str, user_id: str, value: str, ts: str, thread_ts:
     return _ingest(ctx, source="button", channel_id=channel_id, user_id=user_id, text="", ts=ts, thread_ts=thread_ts, trigger=match.trigger, args=match.args)
 
 
-def should_ingest_message(event: dict[str, object], bot_user_id: str | None) -> bool:
+def should_ingest_message(
+    event: dict[str, object],
+    bot_user_id: str | None,
+    own_bot_id: str | None = None,
+) -> bool:
     """Whether a Slack ``message`` event should be ingested.
 
     Avoids double-ingestion: a bot-mentioned thread reply already arrives via
-    ``app_mention``, so the ``message`` handler must skip it. Also skips bot-
-    authored messages, edits/other subtypes, and non-thread (top-level) messages.
+    ``app_mention``, so the ``message`` handler must skip the bot-user-ID form.
+    Slack mobile may instead emit only a top-level ``message`` containing this
+    app's bot-ID mention; accept that form. Also skips bot-authored messages and
+    edits/other subtypes.
     """
 
     if event.get("subtype") or event.get("bot_id"):
         return False
-    if not event.get("thread_ts"):
-        return False
     text = event.get("text")
-    if bot_user_id and isinstance(text, str) and f"<@{bot_user_id}>" in text:
+    text = text if isinstance(text, str) else ""
+    mentions_bot_user = bool(bot_user_id) and f"<@{bot_user_id}>" in text
+    if mentions_bot_user:
         return False
-    return True
+    if event.get("thread_ts"):
+        return True
+    return bool(own_bot_id) and f"<@{own_bot_id}>" in text
 
 
 def handle_reaction(channel_id: str, user_id: str, reaction: str, item_ts: str, ctx: AppContext) -> InboundEvent | None:

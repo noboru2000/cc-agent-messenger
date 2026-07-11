@@ -12,8 +12,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Reply to your AI coding agents from **Slack on your phone**, while they keep
-working in VS Code on your Mac. A small resident bot bridges a Slack channel to
-the live Claude Code session (and, headlessly, to Codex / Copilot), so you can
+working in VS Code or an interactive CLI. A small resident bot bridges a Slack
+channel to the live Claude Code session (and, headlessly, to Codex / Copilot), so you can
 ask for status, choose the next step, or get pinged when a long job finishes —
 as **complete message turns**, not live terminal mirroring.
 
@@ -34,7 +34,7 @@ iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
 ## Demo
 
 What it looks like from your phone — a Slack thread where you `@`-mention the bot
-and the live Claude Code session on your Mac answers (commands start with `!`;
+and the resident Claude Code session in VS Code or the interactive CLI answers (commands start with `!`;
 plain words and emoji/button taps work too):
 
 ```text
@@ -61,8 +61,10 @@ plain words and emoji/button taps work too):
 ## What it does
 
 - **Inbound:** a Slack message in your private channel is authorized and appended
-  to a local file; your live Claude Code session (watching it with `tail -f`)
-  wakes, interprets the command, and replies.
+  to a local file; your resident Claude Code session — either a VS Code window or
+  an interactive `claude` CLI (C0) — watches it with `tail -F`, wakes, interprets
+  the command, and replies. Optional C1 instead lets the daemon spawn a headless
+  agent per Slack turn; upgrading does not enable C1 automatically.
 - **Outbound:** the reply is posted by the project's own bot, @-mentioning you, so
   your phone gets a push.
 - **Agents:** Claude Code via the **live session (C0)**; Codex and Copilot via
@@ -168,8 +170,9 @@ Full reference in [docs/USAGE.md](docs/USAGE.md).
 
 ## Limitations
 
-- **Session-bound:** the live (C0) bridge works only while VS Code and the Mac are
-  awake and the skill's monitor is armed. It is not a 24/7 service.
+- **Session-bound:** the live (C0) bridge works only while the interactive Claude
+  session, its host, and the skill's Monitor remain running. It is not a 24/7
+  service by itself.
 - Copilot/Codex replies come from a **headless CLI turn**, separate from their
   VS Code GUI panels.
 

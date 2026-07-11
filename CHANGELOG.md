@@ -6,6 +6,8 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-11
+
 ### Added
 - **Headless Claude agents (C1), wired end-to-end.** Route a dedicated Slack channel
   to a `claude -p` agent via an `[[agent]]` block (`integration = "c1"`,
@@ -35,6 +37,15 @@ semantic versioning.
   resumed thread. (`build_codex_command` + `_parse_codex_jsonl`.)
 
 ### Fixed
+- **iOS top-level bot mentions were silently dropped (#13).** Slack mobile may
+  encode the visible bot mention with the bot ID (`<@B…>`) and emit only a plain
+  `message`, while desktop uses the bot user ID (`<@U…>`) and emits
+  `app_mention`. The message ingress now accepts only the authenticated app's
+  bot-ID form at top level, while the user-ID form remains on `app_mention` to
+  avoid duplicate ingestion. Plain top-level, bot-authored, and edited messages
+  remain rejected. `doctor --slack` now treats the required `groups:history`
+  scope as a hard failure when missing; SETUP distinguishes this automatic scope
+  check from the manual `message.groups` Event Subscription check.
 - **`doctor --slack` crashed on the Socket Mode check** with
   `apps_connections_open() missing 1 required keyword-only argument: 'app_token'`.
   Current `slack_sdk` does not reuse the `WebClient` bearer token for
@@ -49,6 +60,13 @@ semantic versioning.
   parses). The bug shipped with the original C1 wiring and was caught by a new opt-in
   live round-trip test (`CC_LIVE_C1=1`) that drives the real CLIs through the daemon's
   dispatch path. (`build_claude_command`.)
+
+### Changed
+- **C0 documentation now covers resident interactive Claude Code CLI sessions.**
+  C0 is explicitly the same context-preserving Monitor flow whether Claude Code
+  runs in VS Code or as the interactive `claude` CLI. The architecture and setup
+  guides compare C0 with daemon-managed C1, document CLI startup/reconnection and
+  backlog recovery, and clarify that upgrading does not enable C1 automatically.
 
 ## [0.5.2] - 2026-06-22
 
@@ -282,7 +300,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.4.0...v0.5.0
