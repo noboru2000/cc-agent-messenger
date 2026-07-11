@@ -21,6 +21,8 @@ send_api_endpoint = ".cc-agent-messenger/send.sock"
 inbound_event_path = ".cc-agent-messenger/tmp/.slack_message"
 
 # --- Behavior ---
+# Slack-visible name for the default, un-routed C0 channel. Requires the
+# `chat:write.customize` Bot Token Scope.
 default_agent = "claude"
 interpretation_mode = "flexible"             # "flexible" | "strict"
 max_chunk_chars = 3900
@@ -59,6 +61,7 @@ audit_retention_days = 30
 #
 # [[agent]]
 # name = "claude-headless"
+# display_name = "Project Claude" # optional Slack name; defaults to `name`
 # integration = "c1"
 # kind = "claude"            # adapter: json output + per-thread --resume (inferred from cli if omitted)
 # channel_id = "C0SECONDCHANNEL"
@@ -71,6 +74,7 @@ audit_retention_days = 30
 # Default is read-only (file writes are denied so a request is refused, not run).
 # [[agent]]
 # name = "copilot-headless"
+# display_name = "Project Copilot"
 # integration = "c1"
 # kind = "copilot"
 # channel_id = "C0THIRDCHANNEL"
@@ -83,6 +87,7 @@ audit_retention_days = 30
 # inherits it).
 # [[agent]]
 # name = "codex-headless"
+# display_name = "Project Codex"
 # integration = "c1"
 # kind = "codex"
 # channel_id = "C0FOURTHCHANNEL"

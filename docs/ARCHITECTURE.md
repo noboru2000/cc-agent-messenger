@@ -49,6 +49,17 @@ session never see it. Posting under the **bot identity** (distinct from the owne
 is what makes the owner `@mention` generate a phone push — Slack suppresses
 notifications for your own messages.
 
+### Repository-owned sender display names
+
+Every outbound post uses a Slack-visible name resolved only from local project
+configuration. The default C0 path uses `default_agent`. A routed C0/C1 agent uses
+`[[agent]].display_name`, falling back to its stable `name` when omitted. `name`
+continues to key routing and resumable sessions, so changing `display_name` is
+cosmetic and does not reset a C1 thread. Message content and send-API callers
+cannot supply an arbitrary username. Slack requires `chat:write.customize`; the
+doctor treats it as required. Existing `config.toml` files remain valid and are
+preserved by `init`.
+
 ## Four input surfaces (command interpretation)
 
 Most deterministic first: **slash commands** → **Block Kit buttons / select menus**

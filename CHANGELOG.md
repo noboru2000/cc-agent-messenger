@@ -6,6 +6,13 @@ semantic versioning.
 
 ## [Unreleased]
 
+### Added
+- **Repository/agent-specific Slack sender names.** The default C0 channel posts
+  as `default_agent`; routed C0/C1 agents accept an optional `display_name` that
+  falls back to stable `name`. Slack text and send-API callers cannot override
+  authorship. `chat:write.customize` is now a required doctor check, while
+  upgrade-safe `init` preserves existing config and custom display names.
+
 ## [0.6.0] - 2026-07-11
 
 ### Added

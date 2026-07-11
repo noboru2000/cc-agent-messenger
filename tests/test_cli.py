@@ -60,12 +60,13 @@ class InitUpgradeTests(unittest.TestCase):
         skill = os.path.join(d, ".claude", "skills", "cc-agent-messenger", "SKILL.md")
         # simulate a configured repo + a stale skill
         with open(config, "w", encoding="utf-8") as h:
-            h.write('slack_bot_token = "xoxb-REAL"\n')
+            h.write('slack_bot_token = "xoxb-REAL"\n[[agent]]\nname = "stable-id"\ndisplay_name = "Project Claude"\n')
         open(skill, "w").close()  # truncate -> "stale"
         # re-run init (the upgrade path)
         with redirect_stdout(io.StringIO()):
             cli.main(["init", "--dir", d])
         self.assertIn("xoxb-REAL", open(config, encoding="utf-8").read())  # tokens preserved
+        self.assertIn('display_name = "Project Claude"', open(config, encoding="utf-8").read())
         self.assertGreater(os.path.getsize(skill), 0)  # skill refreshed
 
     def test_refresh_profile_backs_up_and_regenerates(self) -> None:

@@ -69,6 +69,14 @@ def handle_send(req: SendRequest, ctx: AppContext) -> SendResult:
         _audit(ctx, op="send", outcome=STATUS_UNAUTHORIZED, correlation_id=req.correlation_id, summary="destination not allowed")
         return SendResult(STATUS_UNAUTHORIZED, reason="destination outside the allowed channel(s)")
 
+    # Resolve authorship only from trusted local config. The send API and Slack
+    # message text cannot request an arbitrary username (P15).
+    display_name = cfg.default_agent
+    for agent in getattr(ctx, "agents", []):
+        if getattr(agent, "channel_id", None) == channel_id:
+            display_name = getattr(agent, "effective_display_name", None) or getattr(agent, "name", cfg.default_agent)
+            break
+
     # 3. Outbound filter (NN10). v1 has no redact/deny rules; enforce length/split.
     from .profile import split_for_slack
 
@@ -95,9 +103,9 @@ def handle_send(req: SendRequest, ctx: AppContext) -> SendResult:
                     ctx.slack.update(ph_channel, ph_ts, chunk, options)
                     posted.append(ph_ts)
                 except Exception:  # stale placeholder -> fall back to a fresh post
-                    posted.append(ctx.slack.post(channel_id, chunk, req.thread_ts, options))
+                    posted.append(ctx.slack.post(channel_id, chunk, req.thread_ts, options, display_name))
                 continue
-            ts = ctx.slack.post(channel_id, chunk, req.thread_ts, options)
+            ts = ctx.slack.post(channel_id, chunk, req.thread_ts, options, display_name)
             posted.append(ts)
     except Exception as exc:  # pragma: no cover - exercised via fake raising
         _audit(ctx, op="send", outcome=STATUS_FAILED, correlation_id=req.correlation_id, summary=f"{type(exc).__name__}: {exc}")

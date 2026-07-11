@@ -33,6 +33,13 @@ class AgentConfig:
     cli: str | None = None  # C1: base headless command, e.g. "codex exec"
     extra_args: tuple[str, ...] = ()  # C1: sandbox/approval flags (NN5)
     kind: str = "generic"  # C1 adapter: "claude" | "copilot" | "codex" | "generic"
+    display_name: str | None = None  # Slack presentation only; name stays the stable session key
+
+    @property
+    def effective_display_name(self) -> str:
+        """Slack-visible name, falling back to the stable internal ``name``."""
+
+        return self.display_name.strip() if self.display_name and self.display_name.strip() else self.name
 
     def to_spec(self) -> AgentSpec:
         return AgentSpec(self.name, self.integration, self.channel_id, self.cli, self.extra_args, self.kind)
@@ -70,6 +77,7 @@ def load_agents(path: str) -> list[AgentConfig]:
                 cli=cli,
                 extra_args=tuple(str(a) for a in item.get("extra_args", [])),
                 kind=str(item.get("kind") or infer_kind(cli)),
+                display_name=str(item["display_name"]) if item.get("display_name") is not None else None,
             )
         )
     return agents

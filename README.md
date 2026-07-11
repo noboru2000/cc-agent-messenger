@@ -67,6 +67,9 @@ plain words and emoji/button taps work too):
   agent per Slack turn; upgrading does not enable C1 automatically.
 - **Outbound:** the reply is posted by the project's own bot, @-mentioning you, so
   your phone gets a push.
+- **Per-repository identity:** `default_agent` names the default C0 sender;
+  optional `[[agent]].display_name` names each routed C0/C1 sender (falling back
+  to stable `name`). Requires the Slack `chat:write.customize` scope.
 - **Agents:** Claude Code via the **live session (C0)**; Codex and Copilot via
   **headless CLIs (C1)**. (C1 is also available for Claude.)
 

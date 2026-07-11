@@ -62,6 +62,9 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
   起床し、コマンドを解釈して返信。任意のC1ではdaemonがSlackの1ターンごとにheadless agentを
   起動します。アップグレードだけでC1が自動的に有効になることはありません。
 - **送信:** 返信は**自前 bot** があなたを `@mention` して投稿 → スマホにプッシュ。
+- **repoごとの表示名:** 既定C0は`default_agent`、ルーティングされるC0／C1は任意の
+  `[[agent]].display_name`でSlack送信者名を設定(`name`へフォールバック)。
+  Slackの`chat:write.customize`スコープが必要。
 - **エージェント:** Claude Code は**ライブセッション(C0)**、Codex/Copilot は**ヘッド
   レス CLI(C1)**。Claude も C1 可。
 

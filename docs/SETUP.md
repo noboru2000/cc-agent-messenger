@@ -81,10 +81,10 @@ You will come away with **two tokens** (`xoxb-…` bot, `xapp-…` app-level) an
 
 1. **Create New App → From scratch.** Name it `<bot-name>`, pick your workspace.
 2. **OAuth & Permissions → Bot Token Scopes** — add:
-   `chat:write`, `app_mentions:read`, `groups:history`, `groups:read`, `commands`,
-   `reactions:read`, `reactions:write`.
-   (`reactions:write` powers the 👀→✅ receipt; for per-agent display names without
-   separate apps, also add `chat:write.customize`.)
+   `chat:write`, `chat:write.customize`, `app_mentions:read`, `groups:history`,
+   `groups:read`, `commands`, `reactions:read`, `reactions:write`.
+   (`reactions:write` powers the 👀→✅ receipt; `chat:write.customize` lets each
+   repository/agent use its configured sender display name.)
 3. **Socket Mode → Enable.** Generate an **App-Level Token** with scope
    `connections:write` — this is the **`xapp-…`** token. (The Token Name is just a
    label, e.g. `socket-mode`.)
@@ -137,7 +137,8 @@ read-only checks (no daemon needed):
     cc-agent-messenger doctor --slack
 
 `--slack` probes authentication, **granted scopes**, channel membership, and Socket
-Mode. `chat:write`, `app_mentions:read`, and `groups:history` must pass;
+Mode. `chat:write`, `chat:write.customize`, `app_mentions:read`, and
+`groups:history` must pass;
 `groups:history` is what permits the `message.groups` events used by mobile
 top-level mentions. Missing optional reaction/slash scopes are reported as
 recommendations.
@@ -343,6 +344,24 @@ uses on its own to tell you e.g. "実験が完了しました" when a long job f
   ownership of that channel, so the message will not also enter the default C0
   ingress file.
 
+### Set repository/agent sender names
+
+The default C0 channel uses `default_agent` as its Slack-visible sender name:
+
+    default_agent = "ULBC Mac"
+
+A routed C0/C1 agent can keep a stable internal name and choose a presentation
+name independently:
+
+    [[agent]]
+    name = "claude-headless"
+    display_name = "ULBC Claude"
+
+When `display_name` is omitted, Slack uses `name`. Renaming `display_name` does not
+reset a C1 thread; avoid renaming `name`, which is also the session key. These
+names are trusted local config only and cannot be overridden from Slack text or
+the send CLI. After changing them, restart the daemon.
+
 - **One channel per agent.** Add `[[agent]]` entries to the config (a dedicated
   channel each); the daemon routes by `channel_id`. Claude uses C0 (live session);
   Codex/Copilot use C1 (their headless CLIs — separate from their VS Code tabs).
@@ -360,6 +379,7 @@ ships in the file). For a headless Claude agent on a second channel:
 
     [[agent]]
     name = "claude-headless"
+    display_name = "Project Claude"  # optional; defaults to name
     integration = "c1"
     kind = "claude"          # json output + per-thread --resume (inferred from cli if omitted)
     channel_id = "C0SECONDCHANNEL"

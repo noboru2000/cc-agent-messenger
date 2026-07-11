@@ -48,22 +48,28 @@ class DoctorTests(unittest.TestCase):
             self.assertTrue(got[name], name)
 
     def test_missing_reactions_scope_surfaced_not_failed(self) -> None:
-        fake = _helpers.FakeSlack(scopes=["chat:write", "app_mentions:read", "groups:history"])
+        fake = _helpers.FakeSlack(scopes=["chat:write", "chat:write.customize", "app_mentions:read", "groups:history"])
         scope_row = next(r for r in run_doctor(self.cfg, check_slack=True, slack=fake) if r[0] == "bot scopes")
         self.assertTrue(scope_row[1])  # core present -> not a hard fail
         self.assertIn("reactions:write", scope_row[2])  # but it's surfaced
 
     def test_missing_core_scope_fails(self) -> None:
-        fake = _helpers.FakeSlack(scopes=["app_mentions:read"])  # no chat:write
+        fake = _helpers.FakeSlack(scopes=["chat:write.customize", "app_mentions:read", "groups:history"])  # no chat:write
         scope_row = next(r for r in run_doctor(self.cfg, check_slack=True, slack=fake) if r[0] == "bot scopes")
         self.assertFalse(scope_row[1])
         self.assertIn("chat:write", scope_row[2])
 
     def test_missing_groups_history_fails(self) -> None:
-        fake = _helpers.FakeSlack(scopes=["chat:write", "app_mentions:read"])
+        fake = _helpers.FakeSlack(scopes=["chat:write", "chat:write.customize", "app_mentions:read"])
         scope_row = next(r for r in run_doctor(self.cfg, check_slack=True, slack=fake) if r[0] == "bot scopes")
         self.assertFalse(scope_row[1])
         self.assertIn("groups:history", scope_row[2])
+
+    def test_missing_customize_scope_fails(self) -> None:
+        fake = _helpers.FakeSlack(scopes=["chat:write", "app_mentions:read", "groups:history"])
+        scope_row = next(r for r in run_doctor(self.cfg, check_slack=True, slack=fake) if r[0] == "bot scopes")
+        self.assertFalse(scope_row[1])
+        self.assertIn("chat:write.customize", scope_row[2])
 
     def test_not_in_channel_fails(self) -> None:
         fake = _helpers.FakeSlack(is_member=False)
