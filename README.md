@@ -12,8 +12,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Reply to your AI coding agents from **Slack on your phone**, while they keep
-working in VS Code on your Mac. A small resident bot bridges a Slack channel to
-the live Claude Code session (and, headlessly, to Codex / Copilot), so you can
+working in VS Code or an interactive CLI. A small resident bot bridges a Slack
+channel to the live Claude Code session (and, headlessly, to Codex / Copilot), so you can
 ask for status, choose the next step, or get pinged when a long job finishes —
 as **complete message turns**, not live terminal mirroring.
 
@@ -34,7 +34,7 @@ iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
 ## Demo
 
 What it looks like from your phone — a Slack thread where you `@`-mention the bot
-and the live Claude Code session on your Mac answers (commands start with `!`;
+and the resident Claude Code session in VS Code or the interactive CLI answers (commands start with `!`;
 plain words and emoji/button taps work too):
 
 ```text
@@ -61,8 +61,10 @@ plain words and emoji/button taps work too):
 ## What it does
 
 - **Inbound:** a Slack message in your private channel is authorized and appended
-  to a local file; your live Claude Code session (watching it with `tail -f`)
-  wakes, interprets the command, and replies.
+  to a local file; your resident Claude Code session — either a VS Code window or
+  an interactive `claude` CLI (C0) — watches it with `tail -F`, wakes, interprets
+  the command, and replies. Optional C1 instead lets the daemon spawn a headless
+  agent per Slack turn; upgrading does not enable C1 automatically.
 - **Outbound:** the reply is posted by the project's own bot, @-mentioning you, so
   your phone gets a push.
 - **Agents:** Claude Code via the **live session (C0)**; Codex and Copilot via
@@ -94,10 +96,11 @@ PyPI badge above, <https://pypi.org/project/cc-agent-messenger/>, or
 pip: `pip install -U cc-agent-messenger`.)
 
 After upgrading, **re-run `cc-agent-messenger init` in the same project** to refresh
-the skill to the new version, then restart the daemon. `init` **keeps your existing
-bot settings** — tokens, owner, channel, and `profile.json` are preserved; only the
-skill is refreshed (it prints what it refreshed vs kept). See
-[docs/SETUP.md](docs/SETUP.md) §10.
+the skill, then **`cc-agent-messenger restart`** (= stop + start the daemon). `init`
+**keeps your existing bot settings** — tokens, owner, channel, and `profile.json` are
+preserved; only the skill is refreshed (it prints what it refreshed vs kept). No VS
+Code window reload is needed — re-arm the live session in place (see
+[docs/SETUP.md](docs/SETUP.md) §7 → *Copy-paste prompts*).
 
 Uninstall:
 
@@ -140,11 +143,14 @@ simply won't appear in the repo. (Upgrading from a version that also ignored
 
 ## Commands
 
-**CLI:** `cc-agent-messenger <init | uninstall | daemon | send | ping | status |
-stop | kill on|off | doctor | pending | ack | monitors>` — see
-`cc-agent-messenger --help`. `doctor --slack` probes the **live bot** (auth, granted
-scopes — flags a missing `reactions:write` — channel membership, Socket Mode);
-add `--live` for an active 👀→✅ receipt self-test (posts a probe to the channel).
+**CLI:** `cc-agent-messenger <init | uninstall | daemon | restart | send | ping |
+status | stop | kill on|off | doctor | pending | ack | monitors | watch | keepalive |
+commands>` — see `cc-agent-messenger --help`. `restart` = stop + start the daemon
+(enables a no-reload upgrade). `watch` / `keepalive` register on the running daemon —
+the **same scheduler** as Slack `!watch` / `!keepalive`; `commands [--all]` lists every
+command. `doctor --slack` probes the **live bot** (auth, granted scopes — flags a
+missing `reactions:write` — channel membership, Socket Mode); add `--live` for an
+active 👀→✅ receipt self-test (posts a probe to the channel).
 
 **From Slack** (`@bot` + a leading `!`, deterministic, no Slack slash registration —
 or plain words / buttons / emoji):
@@ -164,8 +170,9 @@ Full reference in [docs/USAGE.md](docs/USAGE.md).
 
 ## Limitations
 
-- **Session-bound:** the live (C0) bridge works only while VS Code and the Mac are
-  awake and the skill's monitor is armed. It is not a 24/7 service.
+- **Session-bound:** the live (C0) bridge works only while the interactive Claude
+  session, its host, and the skill's Monitor remain running. It is not a 24/7
+  service by itself.
 - Copilot/Codex replies come from a **headless CLI turn**, separate from their
   VS Code GUI panels.
 

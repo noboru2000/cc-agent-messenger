@@ -2,8 +2,8 @@
 # Copyright (c) 2026 Noboru Harada
 """Unified CLI — `cc-agent-messenger <subcommand>`.
 
-Subcommands: init / uninstall / daemon / send / ping / status / stop / kill /
-doctor / pending / ack / monitors.
+Subcommands: init / uninstall / daemon / send / ping / status / stop / restart /
+kill / doctor / pending / ack / monitors / watch / keepalive / commands.
 See ``docs/PACKAGE_DESIGN.md`` §5–§6. The send/ping/status paths talk to the
 daemon over its Unix socket and never touch the Slack token.
 """
@@ -97,6 +97,56 @@ def cmd_ping(args: argparse.Namespace) -> int:
     return 0 if resp.get("status") == "alive" else 1
 
 
+def _ipc_command(args: argparse.Namespace, op: str) -> int:
+    """Send a `watch`/`keepalive` op to the running daemon and print the ack.
+
+    Parity with the Slack `!watch` / `!keepalive` path: the daemon applies it to the
+    same live scheduler. Lets the live agent (or the owner) register from the CLI."""
+
+    endpoint = _resolve_endpoint(args)
+    if not endpoint:
+        print("error: send API endpoint not set (--endpoint / $SEND_API_ENDPOINT / config)", file=sys.stderr)
+        return 2
+    text = " ".join(args.args).strip()
+    try:
+        resp = ipcclient.request(endpoint, {"v": 1, "op": op, "text": text})
+    except OSError as exc:
+        print(json.dumps({"status": "failed", "reason": f"connect_error: {exc}"}))
+        return 1
+    print(json.dumps(resp, ensure_ascii=False))
+    return 0 if resp.get("status") == "ok" else 1
+
+
+def cmd_watch(args: argparse.Namespace) -> int:
+    return _ipc_command(args, "watch")
+
+
+def cmd_keepalive(args: argparse.Namespace) -> int:
+    return _ipc_command(args, "keepalive")
+
+
+def cmd_commands(args: argparse.Namespace) -> int:
+    """Print the Slack/chat command set (`!…`). `--all` also lists the CLI subcommands."""
+
+    from . import commands as _cmds
+
+    lang = args.lang
+    if args.route:
+        header = "使えるコマンド (route):" if lang == "ja" else "Available commands (route):"
+        lines = [header]
+        for c in _cmds.REGISTRY:
+            desc = c.desc_ja if lang == "ja" else c.desc_en
+            lines.append(f"!{_cmds.bang_name(c)} [{c.route}] … {desc}")
+        print("\n".join(lines))
+    else:
+        print(_cmds.help_text(lang=lang))
+    if args.all:
+        subs = [a for a in build_parser()._actions if isinstance(a, argparse._SubParsersAction)]
+        names = list(subs[0].choices) if subs else []
+        print("\n" + ("CLI コマンド: " if lang == "ja" else "CLI commands: ") + ", ".join(names))
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     cfg = load_config(args.config)
     print(json.dumps(lifecycle.status(cfg), ensure_ascii=False))
@@ -108,6 +158,31 @@ def cmd_stop(args: argparse.Namespace) -> int:
     ok = lifecycle.stop(cfg)
     print("stopped" if ok else "no running daemon (no pidfile / not alive)")
     return 0 if ok else 1
+
+
+def cmd_restart(args: argparse.Namespace) -> int:
+    """Stop a running daemon (if any) and start a fresh one in the foreground.
+
+    The no-reload upgrade path: ``uv tool upgrade … && cc-agent-messenger init &&
+    cc-agent-messenger restart``. Startup recreates the ingress file, so the live
+    session's ``tail -F`` Monitor reattaches without a VS Code window reload.
+    """
+
+    from . import daemon
+
+    cfg = load_config(args.config)
+    if lifecycle.stop(cfg):
+        import time
+
+        print("stopped the running daemon; restarting…")
+        time.sleep(1.0)  # let the socket + pidfile clear before re-binding
+    else:
+        print("no running daemon to stop; starting fresh")
+    try:
+        daemon.run(cfg, ingress_enabled=args.ingress, config_path=args.config)
+    except KeyboardInterrupt:
+        print("\nshutting down")
+    return 0
 
 
 def cmd_kill(args: argparse.Namespace) -> int:
@@ -247,8 +322,9 @@ def cmd_init(args: argparse.Namespace) -> int:
     print(
         "\nFirst run: create the Slack app, fill the config, run `cc-agent-messenger daemon`,\n"
         "  then invoke the cc-agent-messenger skill in Claude Code.\n"
-        "Upgrading: restart the daemon (Ctrl+C or `cc-agent-messenger stop`, then "
-        "`cc-agent-messenger daemon`)\n  and reload the VS Code window so the refreshed skill loads."
+        "Upgrading: run `cc-agent-messenger restart` (= stop + daemon), then paste the\n"
+        "  '② Apply the update' prompt from docs/SETUP.md §7 into the live session.\n"
+        "  No window reload needed."
     )
     return 0
 
@@ -379,6 +455,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_stop = sub.add_parser("stop", help="stop the daemon (via pidfile)")
     p_stop.set_defaults(func=cmd_stop)
 
+    p_restart = sub.add_parser("restart", help="stop a running daemon and start a fresh one (no VS Code reload needed)")
+    p_restart.add_argument("--no-ingress", dest="ingress", action="store_false", default=True, help="serve the send API only")
+    p_restart.set_defaults(func=cmd_restart)
+
     p_kill = sub.add_parser("kill", help="toggle the kill switch")
     p_kill.add_argument("state", choices=["on", "off"])
     p_kill.set_defaults(func=cmd_kill)
@@ -398,6 +478,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_monitors = sub.add_parser("monitors", help="list the scheduled monitors defined in config ([[monitor]])")
     p_monitors.set_defaults(func=cmd_monitors)
+
+    p_watch = sub.add_parser("watch", help="register/list/toggle a daemon monitor (parity with Slack !watch)")
+    p_watch.add_argument("args", nargs="*", help='<id> [every:Nm] ["items"] | list | <id> on|off | off')
+    p_watch.add_argument("--endpoint", default=None, help="Unix socket path override")
+    p_watch.set_defaults(func=cmd_watch)
+
+    p_keepalive = sub.add_parser("keepalive", help="toggle/query the keep-alive heartbeat (parity with Slack !keepalive)")
+    p_keepalive.add_argument("args", nargs="*", help='MR:Nm ["items"] | off | (empty = status)')
+    p_keepalive.add_argument("--endpoint", default=None, help="Unix socket path override")
+    p_keepalive.set_defaults(func=cmd_keepalive)
+
+    p_commands = sub.add_parser("commands", help="list the Slack/chat command set (!…); --all also lists CLI commands")
+    p_commands.add_argument("--lang", choices=["ja", "en"], default="ja")
+    p_commands.add_argument("--route", action="store_true", help="annotate each command's handler (daemon/agent/both)")
+    p_commands.add_argument("--all", action="store_true", help="also list the CLI subcommands")
+    p_commands.set_defaults(func=cmd_commands)
 
     return parser
 

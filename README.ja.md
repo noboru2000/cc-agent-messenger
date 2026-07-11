@@ -11,8 +11,8 @@
 [![CI](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml/badge.svg)](https://github.com/noboru2000/cc-agent-messenger/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Mac の VS Code で AI コーディングエージェントが作業を続けている間に、**iPhone の
-Slack** から状況確認・次の選択・完了通知などをやり取りできるツールです。常駐 bot が
+VS Codeまたは対話型CLIでAIコーディングエージェントが作業を続けている間に、**iPhoneの
+Slack**から状況確認・次の選択・完了通知などをやり取りできるツールです。常駐botが
 Slack チャネルと**ライブの Claude Code セッション**(および Codex / Copilot のヘッド
 レス CLI)を橋渡しします。**完結したメッセージ単位**のやり取りで、ターミナルのライブ
 ミラーリングではありません。
@@ -58,7 +58,9 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 ## 何ができるか
 
 - **受信:** プライベートチャネルのメッセージを認可しローカルファイルに追記。`tail -f`
-  で監視中のライブ Claude Code セッションが起床し、コマンドを解釈して返信。
+  で監視中の常駐Claude Codeセッション(VS Codeウィンドウまたは対話型`claude` CLI、C0)が
+  起床し、コマンドを解釈して返信。任意のC1ではdaemonがSlackの1ターンごとにheadless agentを
+  起動します。アップグレードだけでC1が自動的に有効になることはありません。
 - **送信:** 返信は**自前 bot** があなたを `@mention` して投稿 → スマホにプッシュ。
 - **エージェント:** Claude Code は**ライブセッション(C0)**、Codex/Copilot は**ヘッド
   レス CLI(C1)**。Claude も C1 可。
@@ -88,10 +90,11 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 `uv pip index versions cc-agent-messenger` で確認できます(pipx:
 `pipx upgrade cc-agent-messenger`、pip: `pip install -U cc-agent-messenger`)。
 
-更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を新バージョンへ
-更新し、daemon を再起動します。`init` は**現在の bot 設定を引き継ぎます** —
-トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
-(何を更新し何を保持したか表示します)。[docs/SETUP.md](docs/SETUP.md) §10 参照。
+更新後は**同じプロジェクトで `cc-agent-messenger init` を再実行**して skill を更新し、
+**`cc-agent-messenger restart`**(= stop + daemon)します。`init` は**現在の bot 設定を引き継ぎます**
+— トークン・owner・channel・`profile.json` は保持され、**skill だけが更新**されます
+(何を更新し何を保持したか表示します)。**VS Code ウィンドウのリロードは不要**で、ライブ
+セッションはその場で再接続できます([docs/SETUP.ja.md](docs/SETUP.ja.md) §7 → コピペプロンプト)。
 
 アンインストール:
 
@@ -103,7 +106,7 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
     cd your-project
     cc-agent-messenger init          # skill / 設定テンプレ / .gitignore / allowlist を配置
-    # 1) Slack アプリ作成(Socket Mode + スコープ + Event Subscriptions);docs/SETUP.md
+    # 1) Slack アプリ作成(Socket Mode + スコープ + Event Subscriptions);docs/SETUP.ja.md
     # 2) .cc-agent-messenger/config.toml にトークン + チャンネル ID を記入
     cc-agent-messenger daemon        # 常駐 bot 起動
 
@@ -111,7 +114,7 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
     cc-agent-messenger send --text "テスト"   # -> チャネルに投稿、スマホにプッシュ
 
 その後、VS Code の Claude Code セッションで **`cc-agent-messenger`** スキルを起動して
-待ち受け開始。`init` が表示する allow ルールを `.claude/settings.json` に貼ると
+待ち受けを開始します。`init` が表示する allow ルールを `.claude/settings.json` に貼ると
 ハンズフリーになります。
 
 ### `init` が `.gitignore` に追記する内容
@@ -132,23 +135,27 @@ iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
 
 ## コマンド
 
-`cc-agent-messenger <init | uninstall | daemon | send | ping | status | stop | kill on|off | doctor | pending | ack | monitors>`
-— 詳細は `cc-agent-messenger --help`。`doctor --slack` は**稼働中の bot** を診断
-(認証・付与スコープ〔`reactions:write` 漏れも検出〕・チャネル参加・Socket Mode)、
-`--live` を付けると 👀→✅ レシートを実走テスト(チャネルにプローブを投稿)。
-Slack からは `/help`、`/status`、`/options`、`/continue`、`/doctor`、または
-`@bot <メッセージ>` — 全コマンドは [docs/USAGE.md](docs/USAGE.md) を参照。
+**CLI:** `cc-agent-messenger <init | uninstall | daemon | restart | send | ping | status | stop | kill on|off | doctor | pending | ack | monitors | watch | keepalive | commands>` — 詳細は `cc-agent-messenger --help`。`restart` は stop + daemon(リロード不要アップグレード用)。`watch` / `keepalive` は稼働中の daemon に登録され、Slack の `!watch` / `!keepalive` と**同一スケジューラ**です。`commands [--all]` は全コマンドを一覧表示します。`doctor --slack` は**稼働中の bot** を診断し(認証・付与スコープ〔`reactions:write` 漏れも検出〕・チャネル参加・Socket Mode)、`--live` を付けると 👀→✅ レシートを実走テストします(チャネルにプローブを投稿)。
+
+**Slack から**(`@bot` + 先頭 `!` で決定的、Slack スラッシュ登録は不要 — 自由文 / ボタン / 絵文字でも可):
+
+- **確認・実行:** `!status`、`!results`、`!issues`、`!options`、`!select 2`、`!continue`、`!doctor`、`!help`。
+- **一時停止・操作:** `!pause`(ソフト停止 — チャネルは維持、`!continue` で再開)。ハード凍結は CLI 専用の kill switch。
+- **離席・キープアライブ:** `!away MR:10m ["報告内容"]` / `!back`、`!keepalive MR:10m | off`。`MR:` = 最低報告間隔(最低でも *N* ごとに報告。直前に返信があれば次回を後ろ倒し)、省略時は既定値 `10m`。
+- **定期監視:** `!watch <id> every:5m ["内容"]`(例:GPU サーバに SSH して稼働率/メモリ/温度 + loss を監視、閾値アラート付き)/ `!watch <id> off` / `!watch off`(全停止)/ `!watch list`。`every:` = 固定間隔。
+
+詳細は [docs/USAGE.ja.md](docs/USAGE.ja.md) を参照。
 
 ## 制限
 
-- **セッション束縛:** ライブ(C0)ブリッジは VS Code と Mac が起きていてスキルの監視が
-  動いている間のみ。24/7 サービスではありません。
+- **セッション束縛:** ライブ(C0)ブリッジは、対話型Claudeセッション、そのホスト、skillの
+  Monitorが動いている間のみ機能します。それ自体は24/7サービスではありません。
 - Copilot/Codex の返信は**ヘッドレス CLI ターン**で、VS Code の GUI パネルとは別文脈です。
 
 ## ドキュメント
 
-- [docs/SETUP.md](docs/SETUP.md) — Slack アプリ作成・招待・設定・起動・E2E・トラブルシュート。
-- [docs/USAGE.ja.md](docs/USAGE.ja.md) — Slack コマンドリファレンス(`/help`・`/status` 等)・
+- [docs/SETUP.ja.md](docs/SETUP.ja.md) — Slack アプリ作成・招待・設定・起動・E2E・トラブルシュート。
+- [docs/USAGE.ja.md](docs/USAGE.ja.md) — Slack コマンドリファレンス(`!status`・`!options` 等)・
   キーワード・起動後の期待動作。
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — C0 ループ・egress chokepoint・4入力面・
   セキュリティモデル。

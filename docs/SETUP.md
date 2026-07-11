@@ -1,5 +1,7 @@
 # Setup & operation
 
+**English** | [日本語](SETUP.ja.md)
+
 End-to-end guide: open your project, install `cc-agent-messenger`, create the Slack
 app, configure it, run it, and verify the round trip. Host-specific values use
 placeholders like `<bot-name>` / `<owner-user-id>` / `<channel-id>`. Real tokens stay
@@ -88,7 +90,9 @@ You will come away with **two tokens** (`xoxb-…` bot, `xapp-…` app-level) an
    label, e.g. `socket-mode`.)
 4. **Event Subscriptions → Enable.** Under "Subscribe to bot events" add
    `app_mention`, `message.groups`, `reaction_added`, then **Save**. (Required even
-   under Socket Mode — without it no events arrive.)
+   under Socket Mode — without it no events arrive.) `message.groups` is required
+   for thread replies and for top-level bot mentions sent by Slack mobile, which
+   may arrive as plain `message` events instead of `app_mention`.
 5. **Interactivity & Shortcuts → Enable.** Toggle it **On** (under Socket Mode the
    Request URL is unused; leave Shortcuts / Select Menus empty). **Required for the
    option buttons** (`!options` → `!select`): without it the buttons render but a
@@ -127,16 +131,36 @@ collected:
     #   allowed_slack_channel_id = "C…"     (§4)
     # keep send_api_endpoint short (AF_UNIX path length limit)
 
-Then **verify the Slack app + config are correct before running anything** — this
-talks to Slack directly (no daemon needed):
+Then **verify the Slack app + config before starting the daemon**. First run the
+read-only checks (no daemon needed):
+
+    cc-agent-messenger doctor --slack
+
+`--slack` probes authentication, **granted scopes**, channel membership, and Socket
+Mode. `chat:write`, `app_mentions:read`, and `groups:history` must pass;
+`groups:history` is what permits the `message.groups` events used by mobile
+top-level mentions. Missing optional reaction/slash scopes are reported as
+recommendations.
+
+Next, manually verify the setting that tokens cannot inspect:
+
+1. Open <https://api.slack.com/apps> → your app → **Event Subscriptions**.
+2. Confirm **Enable Events** is On.
+3. Under **Subscribe to bot events**, confirm `app_mention`, `message.groups`, and
+   `reaction_added` are present, then **Save Changes** if you edited them.
+4. If you added `groups:history` under **OAuth & Permissions**, reinstall the app
+   to the workspace and use the current `xoxb-…` token in `config.toml`.
+
+Slack does not expose Event Subscriptions through the installed bot/app tokens,
+so `doctor` cannot automatically confirm `message.groups`. For an optional active
+outbound/receipt probe (it posts a throwaway message), run:
 
     cc-agent-messenger doctor --slack --live
 
-`--slack` probes the live bot — auth, **granted scopes** (flags a missing
-`reactions:write`), channel membership, Socket Mode — and `--live` posts a throwaway
-message to your channel and runs the 👀→✅ receipt on it. All `PASS` means the Slack
-side is wired correctly. (The local socket/ping checks come next, once the daemon is
-up.)
+This proves posting and 👀→✅ reactions, but not inbound `message.groups` delivery.
+After the daemon starts, complete the inbound check from Slack mobile with a new
+top-level `@<bot-name> !help`; it must receive 👀 and one reply. Repeat on desktop
+and confirm there is only one reply. (Local socket/ping checks follow in §6.)
 
 ## 6. Run the daemon & verify the return path
 
@@ -158,9 +182,15 @@ Now open **another terminal** (the daemon keeps running) and check the return pa
     cc-agent-messenger ping                   # -> {"status":"alive"}
     cc-agent-messenger send --text "test"     # -> posts to your channel; phone gets a push
 
-## 7. Load the skill in the Claude Code window (the live C0 session)
+## 7. Start the resident Claude Code session (C0)
 
 This is the part that **replies** to your Slack commands.
+
+C0 means one already-running, interactive Claude Code session watches the ingress
+file and retains its working context. It can be either a VS Code Claude Code window
+or the interactive `claude` CLI. C1 is different: the daemon launches a headless
+CLI once per Slack turn. Updating to v0.6 does not enable C1 unless you explicitly
+add an `integration = "c1"` agent in §9.
 
 **Prerequisites (check first):**
 
@@ -172,17 +202,52 @@ This is the part that **replies** to your Slack commands.
   `.claude/settings.json`. Without it, each reply asks permission (you can pick
   "always allow" to persist).
 
+### C0 in a VS Code Claude Code window
+
 **Invoke the skill** — in the Claude Code chat input, type:
 
     /cc-agent-messenger
 
 - If `/` does **not** list it, the skill hasn't loaded: run **Command+Shift+P →
-  "Developer: Reload Window"**, then type `/cc-agent-messenger` again. (Do this
-  **after upgrading**, too — a new version's skill won't load until you reload.)
+  "Developer: Reload Window"**, then type `/cc-agent-messenger` again. (After upgrading, use the **② Apply the
+  update** prompt from the §7 table instead of a reload — it keeps your history and
+  reattaches the Monitor without losing context.)
 - Or just ask in plain language ("cc-agent-messenger のスキルで Slack を待ち受けて").
 
 Once invoked, the live session arms `tail -n 0 -f <inbound_event_path>` and replies
 to each Slack command via `cc-agent-messenger send`.
+
+### C0 in the interactive Claude Code CLI
+
+Use this when the agent runs persistently in a terminal, including an
+owner-controlled remote development host. The daemon and interactive Claude
+session are separate long-running processes.
+
+1. In the project directory, verify the daemon first:
+
+       cd <your-project>
+       cc-agent-messenger ping
+
+2. Start an interactive Claude Code session in that same project and leave it
+   running:
+
+       cd <your-project>
+       claude
+
+3. In the Claude prompt, invoke `/cc-agent-messenger`. If the slash command is not
+   listed, tell Claude: `Use the cc-agent-messenger skill and wait for Slack
+   messages in C0 monitor mode.` The session reads the project skill, arms
+   `tail -n 0 -F` on the configured ingress file, and answers through
+   `cc-agent-messenger send`.
+4. Keep that interactive Claude process and its Monitor alive. Closing the CLI,
+   ending the session, or stopping the Monitor stops C0 replies; the daemon may
+   still receive and queue events.
+5. After reconnecting, run `cc-agent-messenger pending` before resuming the
+   Monitor, reply to any backlog, and acknowledge handled events.
+
+For an upgrade, run `cc-agent-messenger init` and restart the daemon in another
+terminal. In the still-running Claude CLI session, ask it to re-read the refreshed
+skill and reconnect the C0 Monitor; there is no need to replace C0 with C1.
 
 **Keep the bridge awake (important for reliable replies).** macOS **App Nap / Power
 Nap** can suspend the idle `tail -f`, which is the usual reason a reply sent **after
@@ -194,6 +259,53 @@ a quiet gap** is not picked up. While operating:
 - **disable App Nap** for VS Code (and the daemon's terminal): System Settings → the
   app → *Prevent App Nap* if shown, or
   `defaults write com.microsoft.VSCode NSAppSleepDisabled -bool YES`, then restart it.
+
+### Copy-paste prompts for the live session
+
+Paste these **into the running Claude Code session** to drive the bridge in place —
+no window reload, history kept. **Pick by situation:**
+
+| When this happens | First, in a terminal | Then paste into the live session |
+|---|---|---|
+| First time / a new session | (make sure the daemon is running) | **① Start** |
+| You upgraded the tool | `uv tool upgrade cc-agent-messenger && cc-agent-messenger init && cc-agent-messenger restart` | **② Apply the update** |
+| No replies / the Monitor died | `cc-agent-messenger restart` (if unsure) | **③ Re-arm** |
+| Mac woke from sleep / replies feel missed | — | **④ Catch up** |
+| You want it to stop watching | — | **⑤ Stop** |
+
+The ingress path in the prompts is the v0.5.x default
+(`.cc-agent-messenger/tmp/.slack_message`); change it if your `config.toml` sets a
+different `inbound_event_path`.
+
+**① Start** — begin watching (equivalently, just invoke the `cc-agent-messenger` skill):
+
+      Use the cc-agent-messenger skill: read inbound_event_path from
+      .cc-agent-messenger/config.toml, arm a persistent Monitor with
+      `tail -n 0 -F <inbound_event_path>`, and reply to each event per the skill.
+
+**② Apply the update** — after you ran `init` + `restart` (no window reload):
+
+      I ran `cc-agent-messenger init` and `cc-agent-messenger restart`. Re-read the
+      refreshed cc-agent-messenger skill and re-arm the Monitor with `tail -F`.
+      Do NOT reload the VS Code window.
+
+**③ Re-arm** — bring a dead Monitor back (replies stopped):
+
+      Re-arm the cc-agent-messenger Monitor without reloading: ensure the file exists
+      (`mkdir -p .cc-agent-messenger/tmp && touch .cc-agent-messenger/tmp/.slack_message`),
+      then run `tail -n 0 -F .cc-agent-messenger/tmp/.slack_message` as a persistent
+      background Monitor and resume replying per the skill.
+
+**④ Catch up** — after sleep or a suspected missed wake:
+
+      Catch up: run `cc-agent-messenger pending`, handle each event (reply with
+      `cc-agent-messenger send`), advance the cursor with
+      `cc-agent-messenger ack <correlation_id>`, then re-arm the Monitor.
+
+**⑤ Stop** — detach the Monitor without ending the session:
+
+      Stop the cc-agent-messenger Monitor (kill the background tail). I'll ask you to
+      re-arm it later.
 
 ## 8. End-to-end test
 
@@ -218,6 +330,18 @@ The session calls `cc-agent-messenger send` and the message lands in your channe
 uses on its own to tell you e.g. "実験が完了しました" when a long job finishes.
 
 ## 9. Multiple agents (optional) & multiple projects
+
+### Choose C0 or C1 deliberately
+
+- Choose **C0** when a resident Claude Code CLI/window already owns the work and
+  must retain its live context. The default single-channel setup is C0 and needs
+  no `[[agent]]` entry.
+- Choose **C1** when the daemon should start an agent only when a Slack message
+  arrives. C1 requires an explicit `[[agent]]` entry and does not use the C0
+  Monitor.
+- Do not point C0 and C1 at the same Slack channel. A configured agent route takes
+  ownership of that channel, so the message will not also enter the default C0
+  ingress file.
 
 - **One channel per agent.** Add `[[agent]]` entries to the config (a dedicated
   channel each); the daemon routes by `channel_id`. Claude uses C0 (live session);
@@ -257,6 +381,13 @@ the daemon's environment, and give it a dedicated channel. Each Slack thread kee
 resumable session. The default is read-only (file writes are **denied** so a write
 request is refused rather than executed); add `extra_args = ["--allow-all-tools"]` to
 let it edit (use a private repo).
+
+**Codex** works the same way (`kind = "codex"`, `cli = "codex exec"`): install
+`npm i -g @openai/codex` and authenticate via `codex login`, then give it a dedicated
+channel. The daemon runs `codex exec --json` and resumes each Slack thread with
+`codex exec resume <id>`. The default sandbox is **read-only** (set on the first turn;
+resume inherits it); add `extra_args = ["-s", "workspace-write"]` to let it edit in the
+workspace (use a private repo).
 
 ## 10. Kill switch & audit
 
@@ -299,14 +430,18 @@ upgrade.
        cc-agent-messenger init
 
 3. **Restart the daemon** so it runs the new code (a running daemon holds the old
-   version in memory):
+   version in memory). `restart` stops the old one and starts a fresh one — and on
+   startup recreates the ingress file so the live Monitor can reattach:
 
-       cc-agent-messenger stop        # or Ctrl+C in its terminal
-       cc-agent-messenger daemon
+       cc-agent-messenger restart     # = stop + daemon (Ctrl+C in its terminal still works)
 
-4. **Reload the live session** so the refreshed skill loads: in VS Code,
-   Command+Shift+P → "Developer: Reload Window", then re-invoke
-   `/cc-agent-messenger`.
+4. **Re-arm the live session — no window reload needed.** "Developer: Reload Window"
+   clears the live session's history, which is costly mid-task. Instead, in the
+   **live session**, paste the **② Apply the update** prompt from *§7 → Copy-paste prompts*: the
+   session re-reads the refreshed skill and re-arms `tail -F` while keeping its
+   history. (With `tail -F`, later daemon restarts reattach on their own — you only
+   re-arm when the skill instructions changed or the Monitor had died. A full window
+   reload remains a fallback if you don't mind losing history.)
 
 5. **Verify:**
 

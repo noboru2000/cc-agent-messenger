@@ -8,9 +8,11 @@ handles all Slack/socket I/O, so the agent itself needs no cc-agent-messenger sk
 
 Per-agent **adapter** (selected by ``AgentSpec.kind``) builds the command and parses
 the output. ``"claude"`` runs ``claude -p --output-format json`` and reads ``.result``
-/ ``.session_id`` (Phase 1, wired into the daemon). ``"generic"`` keeps the original
-raw-stdout behavior for other CLIs. Sandboxing/approval per tool (NN5) is configured
-by the caller via ``extra_args`` — defaults are read-only/plan-centric.
+/ ``.session_id``; ``"copilot"`` runs ``copilot -p -s`` with a caller-supplied
+``--session-id``; ``"codex"`` runs ``codex exec --json`` (JSONL events) and resumes via
+``codex exec resume <thread_id>``. ``"generic"`` keeps the original raw-stdout behavior
+for other CLIs. Sandboxing/approval per tool (NN5) is configured by the caller via
+``extra_args`` — defaults are read-only/plan-centric.
 """
 
 from __future__ import annotations
@@ -28,7 +30,7 @@ class AgentSpec:
     channel_id: str
     cli: str | None = None  # base headless command, e.g. "claude -p" / "codex exec" / "copilot -p"
     extra_args: tuple[str, ...] = ()  # e.g. sandbox/approval flags (NN5)
-    kind: str = "generic"  # "claude" | "copilot" | "generic" — selects the command/parse adapter
+    kind: str = "generic"  # "claude" | "copilot" | "codex" | "generic" — selects the command/parse adapter
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,10 @@ def build_claude_command(spec: AgentSpec, *, session_id: str | None = None, read
     if spec.integration != "c1":
         raise ValueError(f"agent {spec.name!r} is not a C1 agent (integration={spec.integration})")
     base = shlex.split(spec.cli) if spec.cli else ["claude", "-p"]
-    argv = [*base, "--output-format", "json", "--bare"]
+    # NB: no `--bare`. On Claude Code 2.1.x `--output-format json --bare` short-circuits
+    # to a bogus `"Not logged in"` result (0 tokens, ~17ms) even when authenticated;
+    # `--output-format json` alone returns the `.result` / `.session_id` we parse.
+    argv = [*base, "--output-format", "json"]
     if read_only and not _has_flag(spec.extra_args, "--permission-mode"):
         # dontAsk denies anything outside --allowedTools without prompting (no hangs).
         argv += ["--permission-mode", "dontAsk", "--allowedTools", CLAUDE_READONLY_TOOLS]
@@ -133,6 +138,69 @@ def build_copilot_command(spec: AgentSpec, prompt: str, *, session_id: str | Non
     return argv
 
 
+def _codex_sandbox_set(extra_args: tuple[str, ...]) -> bool:
+    return (
+        _has_flag(extra_args, "-s")
+        or _has_flag(extra_args, "--sandbox")
+        or _has_flag(extra_args, "--dangerously-bypass-approvals-and-sandbox")
+    )
+
+
+def build_codex_command(spec: AgentSpec, *, session_id: str | None = None, read_only: bool = True) -> list[str]:
+    """argv for a headless ``codex exec`` turn (the prompt is passed via stdin as ``-``).
+
+    Emits JSONL events (``--json``) so the reply text and the resumable session id (the
+    ``thread.started`` ``thread_id``) can be extracted. The first turn creates the
+    session with a read-only sandbox by default; later turns ``codex exec resume
+    <thread_id>`` continue it. ``codex exec resume`` *inherits* the session's sandbox and
+    rejects ``-s``, so neither the read-only default nor ``extra_args`` (sandbox/model
+    flags, applied at creation) are replayed on resume. Opt into edits on the first turn
+    via ``extra_args`` (e.g. ``["-s", "workspace-write"]``).
+    """
+
+    if spec.integration != "c1":
+        raise ValueError(f"agent {spec.name!r} is not a C1 agent (integration={spec.integration})")
+    base = shlex.split(spec.cli) if spec.cli else ["codex", "exec"]
+    if session_id:
+        return [*base, "resume", session_id, "--json", "--skip-git-repo-check", "-"]
+    argv = [*base, "--json", "--skip-git-repo-check"]
+    if read_only and not _codex_sandbox_set(spec.extra_args):
+        argv += ["-s", "read-only"]
+    argv += [*spec.extra_args, "-"]
+    return argv
+
+
+def _parse_codex_jsonl(stdout: str) -> tuple[str, str | None] | None:
+    """Parse ``codex exec --json`` JSONL into ``(text, session_id)``.
+
+    ``text`` joins the ``agent_message`` items (the reply); ``session_id`` is the
+    resumable ``thread_id`` from ``thread.started``. Returns ``None`` only when no JSON
+    event was produced at all (so the caller can surface stderr as the error)."""
+
+    parts: list[str] = []
+    session_id: str | None = None
+    saw_json = False
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        saw_json = True
+        etype = obj.get("type")
+        if etype == "thread.started" and obj.get("thread_id"):
+            session_id = str(obj["thread_id"])
+        elif etype == "item.completed":
+            item = obj.get("item") or {}
+            if item.get("type") == "agent_message" and item.get("text"):
+                parts.append(str(item["text"]))
+    if not saw_json:
+        return None
+    return "\n".join(parts).strip(), session_id
+
+
 def run_turn(
     spec: AgentSpec,
     prompt: str,
@@ -156,6 +224,9 @@ def run_turn(
     elif spec.kind == "copilot":
         argv = build_copilot_command(spec, prompt, session_id=session_id, read_only=read_only)
         stdin = None
+    elif spec.kind == "codex":
+        argv = build_codex_command(spec, session_id=session_id, read_only=read_only)
+        stdin = prompt
     else:
         argv = build_c1_command(spec, prompt)
         stdin = None
@@ -179,6 +250,20 @@ def run_turn(
             session_id=data.get("session_id"),
             is_error=is_error,
             error=(text or "the agent reported an error") if is_error else None,
+        )
+
+    if spec.kind == "codex":
+        parsed = _parse_codex_jsonl(proc.stdout)
+        if parsed is None:
+            detail = proc.stderr.strip() or proc.stdout.strip() or f"no output (exit {proc.returncode})"
+            return TurnResult("", None, True, detail[:1000])
+        text, sid = parsed
+        is_error = proc.returncode != 0 or not text
+        return TurnResult(
+            text=text,
+            session_id=sid,
+            is_error=is_error,
+            error=((proc.stderr.strip() or text or "the agent reported an error")[:1000]) if is_error else None,
         )
 
     text = proc.stdout.strip()

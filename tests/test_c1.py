@@ -11,9 +11,9 @@ import unittest
 from unittest import mock
 
 import _helpers
-from cc_agent_messenger import agentrunner, session
-from cc_agent_messenger.agentrunner import AgentSpec, build_claude_command, build_copilot_command, run_turn
-from cc_agent_messenger.multiagent import infer_kind, load_agents
+from cc_agent_messenger import agentrunner, multiagent, session
+from cc_agent_messenger.agentrunner import AgentSpec, TurnResult, build_claude_command, build_codex_command, build_copilot_command, run_turn
+from cc_agent_messenger.multiagent import AgentConfig, infer_kind, load_agents, run_agent_turn
 
 
 def _proc(stdout: str = "", stderr: str = "", returncode: int = 0):
@@ -25,10 +25,10 @@ def _claude_spec(**kw) -> AgentSpec:
 
 
 class BuildClaudeCommandTests(unittest.TestCase):
-    def test_defaults_json_bare_readonly(self) -> None:
+    def test_defaults_json_readonly(self) -> None:
         argv = build_claude_command(_claude_spec())
         self.assertEqual(argv[:4], ["claude", "-p", "--output-format", "json"])
-        self.assertIn("--bare", argv)
+        self.assertNotIn("--bare", argv)  # regression: --bare breaks claude 2.1.x ("Not logged in")
         self.assertIn("--permission-mode", argv)
         self.assertIn("dontAsk", argv)
         self.assertIn(agentrunner.CLAUDE_READONLY_TOOLS, argv)
@@ -180,11 +180,134 @@ class RunTurnCopilotTests(unittest.TestCase):
         self.assertIn("auth failed", r.error)
 
 
+_CODEX_JSONL = "\n".join(
+    [
+        '{"type":"thread.started","thread_id":"tid-1"}',
+        '{"type":"turn.started"}',
+        '{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"pong"}}',
+        '{"type":"turn.completed","usage":{"input_tokens":1}}',
+    ]
+)
+
+
+class BuildCodexCommandTests(unittest.TestCase):
+    def _spec(self, **kw) -> AgentSpec:
+        return AgentSpec("codex", "c1", "C", cli="codex exec", kind="codex", **kw)
+
+    def test_first_turn_defaults_json_readonly_stdin(self) -> None:
+        argv = build_codex_command(self._spec())
+        self.assertEqual(argv[:2], ["codex", "exec"])
+        self.assertIn("--json", argv)
+        self.assertIn("--skip-git-repo-check", argv)
+        self.assertEqual(argv[argv.index("-s") + 1], "read-only")
+        self.assertEqual(argv[-1], "-")  # prompt comes via stdin
+        self.assertNotIn("resume", argv)
+
+    def test_resume_uses_resume_subcommand_without_sandbox(self) -> None:
+        argv = build_codex_command(self._spec(), session_id="tid-1")
+        self.assertEqual(argv[:3], ["codex", "exec", "resume"])
+        self.assertEqual(argv[3], "tid-1")
+        self.assertNotIn("-s", argv)  # resume inherits the session sandbox; -s is rejected
+        self.assertNotIn("read-only", argv)
+        self.assertEqual(argv[-1], "-")
+
+    def test_extra_args_sandbox_overrides_readonly_default(self) -> None:
+        argv = build_codex_command(self._spec(extra_args=("-s", "workspace-write")))
+        self.assertEqual(argv.count("-s"), 1)  # our read-only default is not added
+        self.assertIn("workspace-write", argv)
+        self.assertNotIn("read-only", argv)
+
+    def test_resume_does_not_replay_extra_args(self) -> None:
+        argv = build_codex_command(self._spec(extra_args=("-s", "workspace-write")), session_id="tid-1")
+        self.assertNotIn("-s", argv)
+        self.assertNotIn("workspace-write", argv)
+
+    def test_c0_agent_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            build_codex_command(AgentSpec("codex", "c0", "C", kind="codex"))
+
+
+class ParseCodexJsonlTests(unittest.TestCase):
+    def test_extracts_text_and_thread_id(self) -> None:
+        text, sid = agentrunner._parse_codex_jsonl(_CODEX_JSONL)
+        self.assertEqual(text, "pong")
+        self.assertEqual(sid, "tid-1")
+
+    def test_joins_multiple_agent_messages(self) -> None:
+        jsonl = "\n".join(
+            [
+                '{"type":"thread.started","thread_id":"t"}',
+                '{"type":"item.completed","item":{"type":"agent_message","text":"a"}}',
+                '{"type":"item.completed","item":{"type":"agent_message","text":"b"}}',
+            ]
+        )
+        text, sid = agentrunner._parse_codex_jsonl(jsonl)
+        self.assertEqual(text, "a\nb")
+        self.assertEqual(sid, "t")
+
+    def test_thread_started_only_yields_empty_text(self) -> None:
+        text, sid = agentrunner._parse_codex_jsonl('{"type":"thread.started","thread_id":"t"}')
+        self.assertEqual(text, "")
+        self.assertEqual(sid, "t")
+
+    def test_no_json_returns_none(self) -> None:
+        self.assertIsNone(agentrunner._parse_codex_jsonl("error: not logged in\n"))
+
+
+class RunTurnCodexTests(unittest.TestCase):
+    def _spec(self) -> AgentSpec:
+        return AgentSpec("codex", "c1", "C", cli="codex exec", kind="codex")
+
+    def test_success_extracts_text_and_session(self) -> None:
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stdout=_CODEX_JSONL)):
+            r = run_turn(self._spec(), "hi")
+        self.assertFalse(r.is_error)
+        self.assertEqual(r.text, "pong")
+        self.assertEqual(r.session_id, "tid-1")
+
+    def test_prompt_goes_via_stdin_not_argv(self) -> None:
+        captured: dict = {}
+
+        def fake_run(argv, **kw):
+            captured["argv"], captured["input"] = argv, kw.get("input")
+            return _proc(stdout=_CODEX_JSONL)
+
+        with mock.patch.object(agentrunner.subprocess, "run", side_effect=fake_run):
+            run_turn(self._spec(), "secret prompt")
+        self.assertEqual(captured["input"], "secret prompt")
+        self.assertNotIn("secret prompt", captured["argv"])
+
+    def test_resume_passes_session_id(self) -> None:
+        captured: dict = {}
+
+        def fake_run(argv, **kw):
+            captured["argv"] = argv
+            return _proc(stdout=_CODEX_JSONL)
+
+        with mock.patch.object(agentrunner.subprocess, "run", side_effect=fake_run):
+            run_turn(self._spec(), "q", session_id="tid-1")
+        self.assertIn("resume", captured["argv"])
+        self.assertIn("tid-1", captured["argv"])
+
+    def test_nonzero_exit_no_json_is_error(self) -> None:
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stderr="not logged in", returncode=1)):
+            r = run_turn(self._spec(), "q")
+        self.assertTrue(r.is_error)
+        self.assertIn("not logged in", r.error)
+
+    def test_empty_reply_is_error(self) -> None:
+        out = '{"type":"thread.started","thread_id":"t"}\n{"type":"turn.completed"}'
+        with mock.patch.object(agentrunner.subprocess, "run", return_value=_proc(stdout=out)):
+            r = run_turn(self._spec(), "q")
+        self.assertTrue(r.is_error)
+        self.assertEqual(r.session_id, "t")  # session still captured for resume
+
+
 class KindInferenceTests(unittest.TestCase):
     def test_infer_kind(self) -> None:
         self.assertEqual(infer_kind("claude -p"), "claude")
         self.assertEqual(infer_kind("copilot -p"), "copilot")
-        self.assertEqual(infer_kind("codex exec"), "generic")
+        self.assertEqual(infer_kind("codex exec"), "codex")
         self.assertEqual(infer_kind(None), "generic")
 
     def test_load_agents_infers_kind_and_to_spec_carries_it(self) -> None:
@@ -196,6 +319,58 @@ class KindInferenceTests(unittest.TestCase):
         agent = load_agents(path)[0]
         self.assertEqual(agent.kind, "claude")
         self.assertEqual(agent.to_spec().kind, "claude")
+
+
+class RunAgentTurnTests(unittest.TestCase):
+    """The daemon's per-turn C1 logic, extracted into multiagent.run_agent_turn."""
+
+    def setUp(self) -> None:
+        self.dir = tempfile.mkdtemp()
+        self.cfg = _helpers.make_config(self.dir)
+
+    def _agent(self, kind: str = "claude", name: str = "a") -> AgentConfig:
+        return AgentConfig(name, "c1", "C", cli=f"{kind} x", kind=kind)
+
+    def test_success_returns_text_and_persists_session(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("hi", session_id="sid-9")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertEqual(out, "hi")
+        self.assertEqual(session.get_session(self.cfg, "a", "t.1"), "sid-9")
+
+    def test_resume_passes_stored_session_id(self) -> None:
+        session.set_session(self.cfg, "a", "t.1", "prev")
+        captured: dict = {}
+
+        def fake(spec, prompt, *, session_id, cwd, timeout):
+            captured["sid"] = session_id
+            return TurnResult("ok", session_id="prev")
+
+        with mock.patch.object(multiagent, "run_turn", side_effect=fake):
+            run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertEqual(captured["sid"], "prev")
+
+    def test_copilot_generates_and_persists_session_when_none(self) -> None:
+        captured: dict = {}
+
+        def fake(spec, prompt, *, session_id, cwd, timeout):
+            captured["sid"] = session_id
+            return TurnResult("ok", session_id=None)  # copilot returns no id
+
+        with mock.patch.object(multiagent, "run_turn", side_effect=fake):
+            run_agent_turn(self.cfg, self._agent(kind="copilot", name="cop"), "q", "t.1")
+        self.assertTrue(captured["sid"])  # a uuid was generated up front
+        self.assertEqual(session.get_session(self.cfg, "cop", "t.1"), captured["sid"])  # and persisted
+
+    def test_error_returns_warning_marker(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("", None, True, "boom")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertIn("⚠️", out)
+        self.assertIn("boom", out)
+
+    def test_empty_text_falls_back_to_placeholder(self) -> None:
+        with mock.patch.object(multiagent, "run_turn", return_value=TurnResult("", session_id="s")):
+            out = run_agent_turn(self.cfg, self._agent(), "q", "t.1")
+        self.assertIn("no output", out)
 
 
 class SessionStoreTests(unittest.TestCase):

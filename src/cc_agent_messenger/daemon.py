@@ -108,7 +108,7 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         import os as _os
         import uuid
 
-        from . import agentrunner, egress, session
+        from . import egress
         from .models import InboundEvent, SendRequest
         from .profile import match_command
 
@@ -127,17 +127,9 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
         )
 
         def run_fn(a: "multiagent.AgentConfig", prompt: str) -> str:
-            spec = a.to_spec()
-            sid = session.get_session(ctx.cfg, a.name, thread_ts)
-            if sid is None and spec.kind == "copilot":
-                sid = str(uuid.uuid4())  # copilot doesn't return a session id; pick one up front
-            result = agentrunner.run_turn(spec, prompt, session_id=sid, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS)
-            token = result.session_id or sid  # claude: captured id; copilot: the uuid we passed
-            if token:
-                session.set_session(ctx.cfg, a.name, thread_ts, token)
-            if result.is_error:
-                return f"⚠️ {a.name}: {result.error or 'the turn failed'}"
-            return result.text or "(the agent returned no output)"
+            return multiagent.run_agent_turn(
+                ctx.cfg, a, prompt, thread_ts, cwd=_os.getcwd(), timeout=C1_TURN_TIMEOUT_SECONDS
+            )
 
         def send_fn(*, text: str, channel_id: str, thread_ts: str | None) -> None:
             egress.handle_send(SendRequest(text=text, thread_ts=thread_ts, channel_id=channel_id, correlation_id=cid), ctx)
@@ -171,9 +163,13 @@ def build_app(ctx: AppContext):  # returns a slack_bolt.App
 
     @app.event("message")
     def _on_message(event, context, logger) -> None:  # noqa: ANN001
-        # Skip bot-mentioned messages (app_mention handles them), bot-authored
-        # messages, edits, and top-level (non-thread) messages — avoids dupes.
-        if not ingress.should_ingest_message(event, context.get("bot_user_id")):
+        # Bot-user-ID mentions stay on app_mention; Slack mobile can encode the
+        # same top-level mention with the bot ID and emit only `message` (#13).
+        if not ingress.should_ingest_message(
+            event,
+            context.get("bot_user_id"),
+            context.get("bot_id"),
+        ):
             return
         channel_id = event.get("channel", "")
         user_id = event.get("user", "")
@@ -240,6 +236,11 @@ def run(cfg: Config, ingress_enabled: bool = True, config_path: str | None = Non
             print(f"cc-agent-messenger send API listening at {cfg.send_api_endpoint}")
             sendapi.serve(ctx)
             return
+
+        # Ensure the ingress file exists so the live session's `tail -F`/`-f` has a
+        # target the moment the skill is invoked (it is otherwise created lazily on
+        # the first message, and a tail armed before then dies — no replies).
+        ingress.ensure_event_file(cfg.inbound_event_path)
 
         thread = threading.Thread(target=sendapi.serve, args=(ctx,), daemon=True)
         thread.start()

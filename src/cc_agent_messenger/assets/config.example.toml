@@ -76,3 +76,15 @@ audit_retention_days = 30
 # channel_id = "C0THIRDCHANNEL"
 # cli = "copilot"
 # # extra_args = ["--allow-all-tools"]   # full autonomy incl. edits (use a private repo!)
+#
+# Headless Codex on its own channel (install: npm i -g @openai/codex; authenticate via
+# `codex login`). `codex exec --json` creates a session; per-thread resume is `codex
+# exec resume <thread_id>`. Default sandbox is read-only (set on the first turn; resume
+# inherits it).
+# [[agent]]
+# name = "codex-headless"
+# integration = "c1"
+# kind = "codex"
+# channel_id = "C0FOURTHCHANNEL"
+# cli = "codex exec"
+# # extra_args = ["-s", "workspace-write"]   # allow edits in the workspace (use a private repo!)
