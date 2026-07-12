@@ -4,6 +4,15 @@
 as **complete message turns** (not live terminal mirroring). It is two halves: a
 Python daemon/CLI, and a Claude Code skill the live session runs.
 
+## Deployment overview
+
+[![cc-agent-messenger deployment overview: Slack apps and daemons connected to C0 resident sessions and C1 headless agents](images/architecture-overview.png)](images/architecture-overview.pdf)
+
+Each deployment pairs a Slack app with a `cc-agent-messenger` daemon. Slack events
+reach the daemon over Socket Mode and replies return through the Web API. C0 uses
+the repository's `SKILL.md` in a resident Claude Code session; C1 invokes Claude
+Code, Codex, or GitHub Copilot headlessly and does not use the project skill.
+
 ## The C0 loop (the proven core)
 
 ```text

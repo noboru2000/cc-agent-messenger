@@ -27,6 +27,18 @@ configured **channel**, is honored — everything else is ignored (NN4).
 > clients. Although Slack may deliver those mentions through different event
 > types, a top-level mobile `@bot !command` has the same behavior as desktop.
 
+### Mention requirements at top level and in threads
+
+| Post location | Bot mention | Example |
+|---|---|---|
+| Channel top level | **Required** | `@<bot-name> !status` |
+| Thread reply below a bot message | **Not required** (also accepted when present) | `!status` or `Tell me the status` |
+
+An unmentioned top-level post is not ingested, which prevents ordinary channel
+conversation from becoming an agent instruction. Inside a thread, the thread is
+already the conversation destination, so you can continue without another
+mention from any Slack client, including iPhone.
+
 ## Commands
 
 Send any of these as `@<bot-name> !<command>` (the `!` makes it exact), or just say

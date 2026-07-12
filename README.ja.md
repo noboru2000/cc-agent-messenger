@@ -22,13 +22,13 @@ Slack チャネルと**ライブの Claude Code セッション**(および Code
 > ハンズフリー自動返信を有効化すると、返信コマンドの自動実行を許可することになります
 > (意識的に受け入れるリスク)。無保証・自己責任。[SECURITY.md](SECURITY.md) 参照。
 
-```text
-iPhone Slack ──(@bot !status)──► 常駐 bot (Bolt + Socket Mode)
-                                       │ 認可(NN4)+ コマンド照合
-                                       ▼
-           .cc-agent-messenger/tmp/.slack_message  ◄── tail -f Monitor(ライブ Claude セッション)
-          iPhone プッシュ ◄── bot chat.postMessage ◄── cc-agent-messenger send(Unix socket 送信 API)
-```
+<p align="center">
+  <a href="https://github.com/noboru2000/cc-agent-messenger/blob/main/docs/images/architecture-overview.pdf">
+    <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/architecture-overview.png" alt="cc-agent-messengerの構成: Slackから個別のAppとdaemonを介して、C0常駐Claude CodeセッションまたはC1ヘッドレスagentへ接続" width="900">
+  </a>
+</p>
+
+<p align="center"><em>各Slack AppはSocket Modeでdaemonへ接続します。C0は常駐Claude Codeセッションでproject skillを使用し、C1はskillを使わずヘッドレスagentをターン単位で実行します。図をクリックするとPDFを表示します。</em></p>
 
 ## デモ
 
