@@ -23,13 +23,13 @@ as **complete message turns**, not live terminal mirroring.
 > reply command — a conscious risk you accept. No warranty; use at your own risk.
 > See [SECURITY.md](SECURITY.md).
 
-```text
-iPhone Slack ──(@bot !status)──► resident bot (Bolt + Socket Mode)
-                                       │ authorize (NN4) + match command
-                                       ▼
-           .cc-agent-messenger/tmp/.slack_message  ◄── tail -f Monitor (live Claude session)
-          iPhone push ◄── bot chat.postMessage ◄── cc-agent-messenger send (Unix-socket send API)
-```
+<p align="center">
+  <a href="https://github.com/noboru2000/cc-agent-messenger/blob/main/docs/images/architecture-overview.pdf">
+    <img src="https://raw.githubusercontent.com/noboru2000/cc-agent-messenger/main/docs/images/architecture-overview.png" alt="cc-agent-messenger architecture: Slack connects separate app and daemon deployments to C0 resident Claude Code sessions or C1 headless agents" width="900">
+  </a>
+</p>
+
+<p align="center"><em>Each Slack app connects to its daemon over Socket Mode. C0 uses a project skill in a resident Claude Code session; C1 runs headless agent turns without that skill. Click the diagram for the PDF.</em></p>
 
 ## Demo
 

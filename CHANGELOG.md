@@ -6,6 +6,19 @@ semantic versioning.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-12
+
+### Documentation
+- **Clarified Slack mention requirements.** Channel top-level posts require a bot
+  `@mention`; replies in a bot-message thread do not require another mention,
+  though mentioned thread replies remain supported. The English and Japanese
+  usage guides now state this behavior explicitly, including mobile clients.
+- **Added a deployment architecture overview.** The English and Japanese READMEs
+  and the architecture guide now illustrate Slack App/daemon pairs, Socket Mode
+  ingress, Web API replies, C0 resident Claude Code sessions with the project
+  `SKILL.md`, and C1 headless Claude Code/Codex/GitHub Copilot turns without it.
+  The README image links to a print-quality PDF.
+
 ## [0.7.0] - 2026-07-11
 
 ### Added
@@ -309,7 +322,8 @@ First public release.
   security policy (SECURITY), CI across Python 3.11–3.13, and a PyPI
   Trusted-Publishing release workflow.
 
-[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/noboru2000/cc-agent-messenger/compare/v0.5.1...v0.5.2
